@@ -28,6 +28,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
   let $items := $options('item-selector')($rootContext) ! (. update ())
   let $test := $options('test')
   let $fix := $options('fix')
+  let $cache := $options('cache')
   
   let $hits :=
     for $item in $items
@@ -39,7 +40,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
       attribute test-id { $test[1] },
       attribute type    { 'warning' },
       element old       { $hit },
-      element new       { $fix($item) },
+      element new       { $fix($item, $cache) },
       element info      {  }
     }
   

@@ -27,7 +27,7 @@ declare variable $reportTest:SETUP := map {
     where fn:normalize-space($t) ne $t
     return $t
   }),
-  'fix': function($entry as element()) {
+  'fix': function($entry as element(), $cache as map(*)) {
     let $t := $entry/text()
     where fn:normalize-space($t) ne $t
     return fn:normalize-space($t)
