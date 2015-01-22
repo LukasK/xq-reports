@@ -20,39 +20,26 @@ TODO
 * schema validation support
 :)
 
-declare variable $report:CUSTOM-SETUP := map {
-  'items': function($rootContext as item()) as element(entry)* {
-    $rootContext//entry
-  },
-  'id': function($item as element()) {
-    $item/@myId/fn:string()
-  },
-  'test1': function($entry as element()) {
-    let $t := $entry/text()
-    where fn:normalize-space($t) ne $t
-    return $t
-  }
-};
-
-
 
 (: ****************************** API ********************************** :)
-declare function report:as-xml($rootContext as node())
+declare function report:as-xml($rootContext as node(), $options as map(*))
 {
   let $timestamp := report:timestamp()
-  let $items := $report:CUSTOM-SETUP('items')($rootContext) ! (. update ())
+  let $items := $options('item-selector')($rootContext) ! (. update ())
+  let $test := $options('test')
+  let $fix := $options('fix')
   
   let $hits :=
     for $item in $items
-    let $hit := $report:CUSTOM-SETUP('test1')($item)
+    let $hit := $test[2]($item)
     where $hit
     return $hit ! element hit {
-      attribute id      { $report:CUSTOM-SETUP('id')($item) },
+      attribute id      { $options('id-selector')($item) },
       attribute xpath   { replace(fn:path($hit), 'root\(\)|Q\{.*?\}', '') },
-      attribute test-id { 'test1' },
+      attribute test-id { $test[1] },
       attribute type    { 'warning' },
       element old       { $hit },
-      element new       { fn:normalize-space($hit) },
+      element new       { $fix($item) },
       element info      {  }
     }
   
@@ -66,12 +53,13 @@ declare function report:as-xml($rootContext as node())
   return $report
 };
 
-declare function report:apply-to-document($report as element(report), $rootContext as node())
+declare function report:apply-to-document($report as element(report), $rootContext as node(),
+  $options as map(*))
 {
   $rootContext update (
-    let $items := $report:CUSTOM-SETUP('items')(.)
+    let $items := $options('item-selector')(.)
     for $hit in $report/hit
-    let $item := $items[$report:CUSTOM-SETUP('id')(.) eq $hit/@id]
+    let $item := $items[$options('id-selector')(.) eq $hit/@id]
     return report:apply-hit-recommendation($hit, $item)
   )
 };
