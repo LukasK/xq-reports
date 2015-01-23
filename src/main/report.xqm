@@ -25,7 +25,7 @@ TODO
 declare function report:as-xml($rootContext as node(), $options as map(*))
 {
   let $timestamp := report:timestamp()
-  let $items := $options('item-selector')($rootContext) ! (. update ())
+  let $items := $options('items-selector')($rootContext) ! (. update ())
   let $test := $options('test')
   let $fix := $options('fix')
   let $cache := $options('cache')
@@ -59,7 +59,7 @@ declare function report:apply-to-document($report as element(report), $rootConte
   $options as map(*)) as node()
 {
   $rootContext update (
-    let $items := $options('item-selector')(.)
+    let $items := $options('items-selector')(.)
     for $hit in $report/hit
     let $item := $items[$options('id-selector')(.) eq $hit/@id]
     return report:apply-hit-recommendation($hit, $item)
