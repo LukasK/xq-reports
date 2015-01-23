@@ -13,11 +13,20 @@ module namespace report = 'report';
   </hit>
 </report>
 
+
 TODO
-* new report attributes
-  * input doc/db name
+* kick FIX function, only test+fix in TEST, pass all items to TEST
+* solve IndPos EN-025
+
 * @id: could be an id or an xpath expression (@resxq-id, @resxq-id-xpath) that leads to item/node
 * schema validation support
+* Unit Tests
+  * replace old node with empty/sequence
+  * text node as selected item -- does it work?
+    * or select ctxRoot as item and return all texts in TEST function?
+* apply report: check if ids in context unique (or during report creation?)
+* fill info element in <hit>
+* test cache
 :)
 
 

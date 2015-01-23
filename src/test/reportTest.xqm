@@ -73,9 +73,9 @@ declare %private function reportTest:create-options(
 {
   map {
     'items-selector' : $items,
-    'id-selector'   : $id,
-    'test'          : ($testId, $test),
-    'fix'           : $fix,
-    'cache'         : $cache
+    'id-selector'    : $id,
+    'test'           : ($testId, $test),
+    'fix'            : $fix,
+    'cache'          : $cache
   }
 };
