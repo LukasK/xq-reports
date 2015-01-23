@@ -81,7 +81,7 @@ declare %updating function report:apply-hit-recommendation(
 {
   report:check-hit($hit, true()) ! (
     let $cleaned  := $hit/new/child::node()
-    (: do not replace with empty sequence! (for now..) :)
+    (: TODO do not replace with empty sequence! (for now..) :)
     where $cleaned
     let $original := $hit/old/child::node()
     let $target   := report:evaluate-xpath($item, $hit/@xpath)
@@ -99,6 +99,7 @@ declare function report:check-hit(
   $strict as xs:boolean)
   as xs:boolean
 {
+(: TODO implement :)
   true()
 };
 
