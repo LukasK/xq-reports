@@ -79,16 +79,19 @@ declare function report:apply-to-document($report as element(report), $rootConte
   $options as map(*)) as node()
 {
   let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
+  let $hits := $report/hit
   return
     $rootContext update (
-      let $items := $options('items-selector')(.)
-      for $hit in $report/hit
-      let $item :=
+      for $item in $options('items-selector')(.)
+      let $itemId :=
         if($noIdSelector) then
-          $items[report:xpath-location(.) eq $hit/@id]
+          report:xpath-location($item)
         else
-          $items[$options('id-selector')(.) eq $hit/@id]
-      return report:apply-hit-recommendation($hit, $item)
+          $options('id-selector')($item)
+      let $hit := $hits[@id eq $itemId]
+      where $hit
+      (: there might be several hits on the descendant axis of an identical item :)
+      return $hit ! report:apply-hit-recommendation(., $item)
     )
 };
 
