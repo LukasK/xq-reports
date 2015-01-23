@@ -21,6 +21,8 @@ TODO
   * replace old node with empty/sequence
   * text node as selected item -- does it work?
     * or select ctxRoot as item and return all texts in TEST function?
+  * persistent changes
+  * nested ITEMS
 * apply report: check if ids in context unique (or during report creation?)
 * fill info element in <hit>
 * test cache
@@ -32,15 +34,30 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
 {
   let $timestamp := report:timestamp()
   let $test := $options('test')
-  let $test-id := $test('id')
+  let $testId := $test('id')
+  (: operate w/o ids --> items are identified via location steps :)
+  let $noIdSelector := fn:empty($options('id-selector'))
   let $testF := $test('do')
   let $cache := $options('cache')
   
-  let $items := $options('items-selector')($rootContext) ! (. update ())
+  let $items := $options('items-selector')($rootContext)
+  let $items := if($noIdSelector) then $items else $items ! (. update ())
   let $hits := $testF($items, $cache) ! element hit {
-      attribute id      { $options('id-selector')(.('item')) },
-      attribute xpath   { replace(fn:path(.('old')), 'root\(\)|Q\{.*?\}', '') },
-      attribute test-id { .('id') },
+      attribute id {
+        let $item := .('item')
+        return if($noIdSelector) then
+          report:xpath-location($item)
+        else
+          $options('id-selector')($item)
+      },
+      attribute xpath   {
+        let $oldLoc := report:xpath-location(.('old'))
+        return if($noIdSelector) then
+          fn:replace($oldLoc, report:escape-pattern(report:xpath-location(.('item'))), '')
+        else
+          $oldLoc
+      },
+      attribute test-id { $testId },
       attribute type    { .('type') },
       element old       { .('old') },
       element new       { .('new') },
@@ -51,6 +68,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
     attribute count { fn:count($hits) },
     attribute time { $timestamp },
     attribute id { report:new-id() },
+    attribute no-id-selector { $noIdSelector },
     $hits
   }
   
@@ -60,12 +78,18 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
 declare function report:apply-to-document($report as element(report), $rootContext as node(),
   $options as map(*)) as node()
 {
-  $rootContext update (
-    let $items := $options('items-selector')(.)
-    for $hit in $report/hit
-    let $item := $items[$options('id-selector')(.) eq $hit/@id]
-    return report:apply-hit-recommendation($hit, $item)
-  )
+  let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
+  return
+    $rootContext update (
+      let $items := $options('items-selector')(.)
+      for $hit in $report/hit
+      let $item :=
+        if($noIdSelector) then
+          $items[report:xpath-location(.) eq $hit/@id]
+        else
+          $items[$options('id-selector')(.) eq $hit/@id]
+      return report:apply-hit-recommendation($hit, $item)
+    )
 };
 
 declare %updating function report:apply-to-database($report as element(report), $rootContext as node())
@@ -79,7 +103,7 @@ declare %updating function report:apply-to-database($report as element(report), 
 (: ********************** utilities *********************:)
 declare %updating function report:apply-hit-recommendation(
   $hit as element(hit),
-  $item as element())
+  $item as node())
 {
   report:check-hit($hit, true()) ! (
     let $cleaned  := $hit/new/child::node()
@@ -106,7 +130,7 @@ declare function report:check-hit(
 };
 
 declare function report:evaluate-xpath(
-  $n    as element(),
+  $n    as node(),
   $path as xs:string
 ) as node()
 {
@@ -157,4 +181,18 @@ declare function report:new-id() as xs:string
     ! xs:string(.)
     ! replace(., '=+$', '')
     ! fn:replace(., "[^A-Za-z0-9]", "_")
+};
+
+declare %private function report:xpath-location($n as node()) as xs:string
+{
+  replace(fn:path($n), 'root\(\)|Q\{.*?\}', '')
+};
+
+declare %private function report:escape-pattern($s as xs:string) as xs:string
+{
+  $s
+    ! replace(., '\[', '\\[')
+    ! replace(., '\]', '\\]')
+    ! replace(., '\(', '\\(')
+    ! replace(., '\)', '\\)')
 };

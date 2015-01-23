@@ -84,11 +84,48 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
   })
 };
 
+declare %unit:test function reportTest:report-fix-nested-without-id()
+{
+  let $doc := document {
+    <items>
+      <n> text1<n> text2<n/> text3 </n></n>
+      text4
+      <n> text5<n> text6<n> text7<n><n/> text8 </n></n><n/> text9 </n></n>
+    </items>
+  }
+  let $options := reportTest:create-options(
+    function($rootContext as node()) as node()* { $rootContext/items//text() },
+    (),
+    map {
+      'id' : 'test-id-nested-without-id',
+      'do' : function($items as node()*, $cache as map(*)) as map(*)* {
+        for $item in $items
+        let $new := fn:normalize-space($item)
+        where $new ne $item
+        return map {
+          'item' : $item,
+          'old'  : $item,
+          'new'  : $new,
+          'type' : 'warning'
+        }
+      }
+    },
+    map {}
+  )
+  let $report := report:as-xml($doc, $options)
+  let $cleaned := report:apply-to-document($report, $doc, $options)
+  return unit:assert-equals($cleaned, document {
+    <items>
+      <n>text1<n>text2<n/>text3</n></n>text4<n>text5<n>text6<n>text7<n><n/>text8</n></n><n/>text9</n></n>
+    </items>
+  })
+};
+
 
 (: ************************* utilities ************************ :)
 declare %private function reportTest:create-options(
   $items  as function(node()) as node()*,
-  $id     as function(node()) as xs:string,
+  $id     as (function(node()) as xs:string)?,
   $test   as map(*),
   $cache  as map(*))
   as map(*)
