@@ -15,9 +15,6 @@ module namespace report = 'report';
 
 
 TODO
-* kick FIX function, only test+fix in TEST, pass all items to TEST
-* solve IndPos EN-025
-
 * @id: could be an id or an xpath expression (@resxq-id, @resxq-id-xpath) that leads to item/node
 * schema validation support
 * Unit Tests

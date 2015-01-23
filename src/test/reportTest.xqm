@@ -13,7 +13,6 @@ declare %unit:test function reportTest:report-fix-simple-text()
   let $options := reportTest:create-options(
     function($rootContext as node()) as node()* { $rootContext//entry },
     function($item as node()) as xs:string { $item/@myId/fn:string() },
-(:    function(node(), map(*)):)
     map {
       'id' : 'test-id-normalize-ws',
       'do' : function($items as node()*, $cache as map(*)) as map(*)* {
@@ -36,6 +35,45 @@ declare %unit:test function reportTest:report-fix-simple-text()
     <items>
       <entry myId="id1">text1.1<sth/>text1.2</entry>
       <entry myId="id2">text2</entry>
+    </items>
+  })
+};
+
+declare %unit:test function reportTest:report-fix-global-element-ordering()
+{
+  let $doc := document {
+    <items>
+      <entry myId="id1"><pos>27</pos></entry>
+      <entry myId="id3"><pos>4</pos></entry>
+      <entry myId="id2"><pos>6</pos></entry>
+    </items>
+  }
+  let $options := reportTest:create-options(
+    function($rootContext as node()) as node()* { $rootContext/items/entry },
+    function($item as node()) as xs:string { $item/@myId/fn:string() },
+    map {
+      'id' : 'test-id-global-order',
+      'do' : function($items as node()*, $cache as map(*)) as map(*)* {
+        let $items := for $i in $items order by number($i/pos/text()) return $i
+        for $item at $i in $items
+        let $pos := $item/pos
+        where number($pos/text()) ne $i
+        return map {
+          'item' : $item,
+          'old'  : $pos,
+          'new'  : $pos update (replace value of node . with $i)
+        }
+      }
+    },
+    map {}
+  )
+  let $report := report:as-xml($doc, $options)
+  let $cleaned := report:apply-to-document($report, $doc, $options)
+  return unit:assert-equals($cleaned, document {
+    <items>
+      <entry myId="id1"><pos>3</pos></entry>
+      <entry myId="id3"><pos>1</pos></entry>
+      <entry myId="id2"><pos>2</pos></entry>
     </items>
   })
 };
