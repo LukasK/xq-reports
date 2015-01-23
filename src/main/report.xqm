@@ -15,16 +15,12 @@ module namespace report = 'report';
 
 
 TODO
-* @id: could be an id or an xpath expression (@resxq-id, @resxq-id-xpath) that leads to item/node
 * schema validation support
 * Unit Tests
   * replace old node with empty/sequence
-  * text node as selected item -- does it work?
-    * or select ctxRoot as item and return all texts in TEST function?
   * persistent changes
   * nested ITEMS
 * apply report: check if ids in context unique (or during report creation?)
-* fill info element in <hit>
 * test cache
 :)
 
