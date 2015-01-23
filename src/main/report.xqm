@@ -32,7 +32,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
   
   let $hits :=
     for $item in $items
-    let $hit := $test[2]($item)
+    let $hit := $test[2]($item, $cache)
     where $hit
     (: return one hit foreach node returned from test :)
     return $hit ! element hit {

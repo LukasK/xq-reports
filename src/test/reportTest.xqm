@@ -18,7 +18,7 @@ declare %unit:test function reportTest:report-fix-simple-text()
       $item/@myId/fn:string()
     },
     'test-id-normalize-ws',
-    function($entry as node()) as node()* {
+    function($entry as node(), $cache as map(*)) as node()* {
       for $t in $entry/text()
       where fn:normalize-space($t) ne $t
       return $t
@@ -48,7 +48,7 @@ declare %private function reportTest:create-options(
   $item   as function(node()) as node()*,
   $id     as function(node()) as xs:string,
   $testId as xs:string,
-  $test   as function(node()) as node()*,
+  $test   as function(node(), map(*)) as node()*,
   $fix    as function(node(), map(*)) as node()*,
   $cache  as map(*))
   as map(*)
