@@ -34,24 +34,20 @@ TODO
 declare function report:as-xml($rootContext as node(), $options as map(*))
 {
   let $timestamp := report:timestamp()
-  let $items := $options('items-selector')($rootContext) ! (. update ())
   let $test := $options('test')
-  let $fix := $options('fix')
+  let $test-id := $test('id')
+  let $testF := $test('do')
   let $cache := $options('cache')
   
-  let $hits :=
-    for $item in $items
-    let $hit := $test[2]($item, $cache)
-    where $hit
-    (: return one hit foreach node returned from test :)
-    return $hit ! element hit {
-      attribute id      { $options('id-selector')($item) },
-      attribute xpath   { replace(fn:path(.), 'root\(\)|Q\{.*?\}', '') },
-      attribute test-id { $test[1] },
+  let $items := $options('items-selector')($rootContext) ! (. update ())
+  let $hits := $testF($items, $cache) ! element hit {
+      attribute id      { $options('id-selector')(.('item')) },
+      attribute xpath   { replace(fn:path(.('old')), 'root\(\)|Q\{.*?\}', '') },
+      attribute test-id { .('id') },
       attribute type    { 'warning' },
-      element old       { . },
-      element new       { $fix(., $cache) },
-      element info      {  }
+      element old       { .('old') },
+      element new       { .('new') },
+      element info      { .('info') }
     }
   
   let $report := element report {
