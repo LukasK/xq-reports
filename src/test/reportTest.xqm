@@ -11,8 +11,11 @@ declare %unit:test function reportTest:report-fix-simple-text()
     </items>
   }
   let $options := reportTest:create-options(
+    (: ITEMS :)
     function($rootContext as node()) as node()* { $rootContext//entry },
+    (: ID :)
     function($item as node()) as xs:string { $item/@myId/fn:string() },
+    (: TEST :)
     map {
       'id' : 'test-id-normalize-ws',
       'do' : function($items as node()*, $cache as map(*)) as map(*)* {
@@ -23,10 +26,12 @@ declare %unit:test function reportTest:report-fix-simple-text()
         return map {
           'item' : $item,
           'old'  : $o,
-          'new'  : $n
+          'new'  : $n,
+          'type' : 'warning'
         }
       }
     },
+    (: CACHE :)
     map {}
   )
   let $report := report:as-xml($doc, $options)
@@ -61,7 +66,8 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
         return map {
           'item' : $item,
           'old'  : $pos,
-          'new'  : $pos update (replace value of node . with $i)
+          'new'  : $pos update (replace value of node . with $i),
+          'type' : 'warning'
         }
       }
     },
@@ -78,6 +84,8 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
   })
 };
 
+
+(: ************************* utilities ************************ :)
 declare %private function reportTest:create-options(
   $items  as function(node()) as node()*,
   $id     as function(node()) as xs:string,

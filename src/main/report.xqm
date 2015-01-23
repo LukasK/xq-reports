@@ -41,7 +41,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
       attribute id      { $options('id-selector')(.('item')) },
       attribute xpath   { replace(fn:path(.('old')), 'root\(\)|Q\{.*?\}', '') },
       attribute test-id { .('id') },
-      attribute type    { 'warning' },
+      attribute type    { .('type') },
       element old       { .('old') },
       element new       { .('new') },
       element info      { .('info') }
