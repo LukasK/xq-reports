@@ -34,13 +34,14 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
     for $item in $items
     let $hit := $test[2]($item)
     where $hit
+    (: return one hit foreach node returned from test :)
     return $hit ! element hit {
       attribute id      { $options('id-selector')($item) },
-      attribute xpath   { replace(fn:path($hit), 'root\(\)|Q\{.*?\}', '') },
+      attribute xpath   { replace(fn:path(.), 'root\(\)|Q\{.*?\}', '') },
       attribute test-id { $test[1] },
       attribute type    { 'warning' },
-      element old       { $hit },
-      element new       { $fix($item, $cache) },
+      element old       { . },
+      element new       { $fix(., $cache) },
       element info      {  }
     }
   
@@ -55,7 +56,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
 };
 
 declare function report:apply-to-document($report as element(report), $rootContext as node(),
-  $options as map(*))
+  $options as map(*)) as node()
 {
   $rootContext update (
     let $items := $options('item-selector')(.)
