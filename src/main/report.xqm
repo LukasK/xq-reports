@@ -19,16 +19,19 @@ declare default function namespace 'report';
 PREREQUISITES
 * BaseX 8.0 (why?)
 * 'ids' must be unique
-* preserve whitespaces?
+* xml:space='preserve' for mixed content w/ un-normalized texts
 
 
 TODO
-* checks/error handling
-  pipe through custom error function
-
-* schema .xsd for report
-* apply  check if ids in context unique (or during report creation?)
-* test cache
+* README
+* schema .xsd for report (drop check-hit for a schema check of the report)
+* check valid options
+* unit tests
+  * recommend/missing <new/>
+  * report schema
+  * cache
+  * expected fails
+* code TODOs
 :)
 
 declare variable $report:ERROR := xs:QName("ERROR");
@@ -59,7 +62,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
       attribute xpath   {
         let $oldLoc := xpath-location(.('old'))
         return if($noIdSelector) then
-          fn:replace($oldLoc, escape-pattern(xpath-location(.('item'))), '')
+          fn:replace($oldLoc, escape-location-path-pattern(xpath-location(.('item'))), '')
         else
           $oldLoc
       },
@@ -215,7 +218,7 @@ declare %private function xpath-location($n as node()) as xs:string
   fn:replace(fn:path($n), 'root\(\)|Q\{.*?\}', '')
 };
 
-declare %private function escape-pattern($s as xs:string) as xs:string
+declare %private function escape-location-path-pattern($s as xs:string) as xs:string
 {
   $s
     ! fn:replace(., '\[', '\\[')
