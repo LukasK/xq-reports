@@ -15,10 +15,9 @@ module namespace report = 'report';
 
 
 TODO
-* persistent changes
+* schema .xsd for report
 * checks/error handling
 * replace old node with empty/sequence
-* nested ITEMS
 * apply report: check if ids in context unique (or during report creation?)
 * test cache
 
@@ -29,7 +28,7 @@ PREREQUISITES
 :)
 
 
-(: ****************************** API ********************************** :)
+
 declare function report:as-xml($rootContext as node(), $options as map(*))
 {
   let $timestamp := report:timestamp()
@@ -60,7 +59,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
       attribute test-id { $testId },
       attribute type    { .('type') },
       element old       { .('old') },
-      element new       { .('new') },
+      if(.('new')) then element new { .('new') } else (),
       element info      { .('info') }
     }
   
@@ -97,7 +96,7 @@ declare function report:apply-to-copy($report as element(report), $rootContext a
 {
   $rootContext update (report:apply($report, ., $options))
 };
-(: ****************************** API ********************************** :)
+
 
 
 
@@ -107,17 +106,17 @@ declare %private %updating function report:apply-hit-recommendation(
   $item as node())
 {
   report:check-hit($hit, true()) ! (
-    let $cleaned  := $hit/new/child::node()
+    let $new  := $hit/new/child::node()
     (: TODO do not replace with empty sequence! (for now..) :)
-    where $cleaned
-    let $original := $hit/old/child::node()
-    let $target   := report:evaluate-xpath($item, $hit/@xpath)
+    where $new
+    let $old := $hit/old/child::node()
+    let $target := report:evaluate-xpath($item, $hit/@xpath)
     return
       (: safety measure - throw error in case original already changed :)
-      if(not(fn:deep-equal($original, $target))) then
+      if(not(fn:deep-equal($old, $target))) then
         fn:error((), "Report recommendation is outdated: " || $hit, $hit)
       else
-        replace node $target with $cleaned
+        replace node $target with $new
   )
 };
 
