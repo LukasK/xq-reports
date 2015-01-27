@@ -15,13 +15,16 @@ module namespace report = 'report';
 
 
 TODO
-* schema validation support
-* Unit Tests
-  * replace old node with empty/sequence
-  * persistent changes
-  * nested ITEMS
+* persistent changes
+* checks/error handling
+* replace old node with empty/sequence
+* nested ITEMS
 * apply report: check if ids in context unique (or during report creation?)
 * test cache
+
+PREREQUISITES
+* 'ids' must be unique
+* preserve whitespaces?
 :)
 
 
@@ -71,36 +74,34 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
   return $report
 };
 
-declare function report:apply-to-document($report as element(report), $rootContext as node(),
-  $options as map(*)) as node()
+declare %updating function report:apply($report as element(report),
+  $rootContext as node(), $options as map(*))
 {
   let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
   let $hits := $report/hit
-  return
-    $rootContext update (
-      for $item in $options('items-selector')(.)
-      let $itemId :=
-        if($noIdSelector) then
-          report:xpath-location($item)
-        else
-          $options('id-selector')($item)
-      let $hit := $hits[@id eq $itemId]
-      where $hit
-      (: there might be several hits on the descendant axis of an identical item :)
-      return $hit ! report:apply-hit-recommendation(., $item)
-    )
+  for $item in $options('items-selector')($rootContext)
+  let $itemId :=
+    if($noIdSelector) then
+      report:xpath-location($item)
+    else
+      $options('id-selector')($item)
+  let $hit := $hits[@id eq $itemId]
+  where $hit
+  (: there might be several hits on the descendant axis of an identical item :)
+  return $hit ! report:apply-hit-recommendation(., $item)
 };
 
-declare %updating function report:apply-to-database($report as element(report), $rootContext as node())
+declare function report:apply-to-copy($report as element(report), $rootContext as node(),
+  $options as map(*)) as node()
 {
-  ()
+  $rootContext update (report:apply($report, ., $options))
 };
 (: ****************************** API ********************************** :)
 
 
 
 (: ********************** utilities *********************:)
-declare %updating function report:apply-hit-recommendation(
+declare %private %updating function report:apply-hit-recommendation(
   $hit as element(hit),
   $item as node())
 {
@@ -119,7 +120,7 @@ declare %updating function report:apply-hit-recommendation(
   )
 };
 
-declare function report:check-hit(
+declare %private function report:check-hit(
   $hit    as element(hit),
   $strict as xs:boolean)
   as xs:boolean
@@ -128,7 +129,7 @@ declare function report:check-hit(
   true()
 };
 
-declare function report:evaluate-xpath(
+declare %private function report:evaluate-xpath(
   $n    as node(),
   $path as xs:string
 ) as node()
@@ -167,11 +168,11 @@ declare %private function report:steps(
     if(empty($dc) or $ch instance of text()) then $ch else report:steps($ch, $dc)
 };
 
-declare function report:timestamp() as xs:dateTime {
+declare %private function report:timestamp() as xs:dateTime {
   fn:adjust-dateTime-to-timezone(fn:current-dateTime(), xs:dayTimeDuration('PT0H'))
 };
 
-declare function report:new-id() as xs:string
+declare %private function report:new-id() as xs:string
 {
   random:uuid()
     ! replace(., '-', '')

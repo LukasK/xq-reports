@@ -35,7 +35,7 @@ declare %unit:test function reportTest:report-fix-simple-text()
     map {}
   )
   let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-document($report, $doc, $options)
+  let $cleaned := report:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned, document {
     <items>
       <entry myId="id1">text1.1<sth/>text1.2</entry>
@@ -74,7 +74,7 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
     map {}
   )
   let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-document($report, $doc, $options)
+  let $cleaned := report:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned, document {
     <items>
       <entry myId="id1"><pos>3</pos></entry>
@@ -113,7 +113,7 @@ declare %unit:test function reportTest:report-fix-nested-without-id()
     map {}
   )
   let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-document($report, $doc, $options)
+  let $cleaned := report:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned, document {
     <items>
       <n>text1<n>text2<n/>text3</n></n>text4<n>text5<n>text6<n>text7<n><n/>text8</n></n><n/>text9</n></n>
