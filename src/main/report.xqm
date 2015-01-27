@@ -1,14 +1,16 @@
 module namespace report = 'report';
+declare default function namespace 'report';
 
 (:
-<report count="1" time="2015-01-22T12:18:57.098Z" id="TJikGdmrT3Gi1xOooXqJMw">
-  <hit dbid="000001" matid="MatId_787b08d312m_d703e284" xpath="/LO[1]/LOSchlagW[1]/AWLText[1]" test-id="EN-002">
-    <old>
-      <itemToFix>bla</itemToFix>
-    </old>
-    <new>
-      <itemToFix>blubb</itemToFix>
-    </new>
+<report count="2" time="2015-01-27T14:34:36.664Z" id="fSaZRLanR3223NUsz26DKw" no-id-selector="false">
+  <hit id="id1" xpath="/text()[1]" test-id="test-id-normalize-ws" type="warning">
+    <old>text1.1  </old>
+    <new/>
+    <info/>
+  </hit>
+  <hit id="id1" xpath="/text()[2]" test-id="test-id-normalize-ws" type="warning">
+    <old> text1.2 </old>
+    <new/>
     <info/>
   </hit>
 </report>
@@ -25,15 +27,17 @@ TODO
   pipe through custom error function
 
 * schema .xsd for report
-* apply report: check if ids in context unique (or during report creation?)
+* apply  check if ids in context unique (or during report creation?)
 * test cache
 :)
 
+declare variable $report:ERROR := xs:QName("ERROR");
 
 
-declare function report:as-xml($rootContext as node(), $options as map(*))
+declare function as-xml($rootContext as node(), $options as map(*))
 {
-  let $timestamp := report:timestamp()
+  let $ok := check-options($options)
+  let $timestamp := timestamp()
   let $test := $options('test')
   let $testId := $test('id')
   (: operate w/o ids --> items are identified via location steps :)
@@ -48,14 +52,14 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
       attribute id {
         let $item := .('item')
         return if($noIdSelector) then
-          report:xpath-location($item)
+          xpath-location($item)
         else
           $options('id-selector')($item)
       },
       attribute xpath   {
-        let $oldLoc := report:xpath-location(.('old'))
+        let $oldLoc := xpath-location(.('old'))
         return if($noIdSelector) then
-          fn:replace($oldLoc, report:escape-pattern(report:xpath-location(.('item'))), '')
+          fn:replace($oldLoc, escape-pattern(xpath-location(.('item'))), '')
         else
           $oldLoc
       },
@@ -68,7 +72,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
   let $report := element report {
     attribute count { fn:count($hits) },
     attribute time { $timestamp },
-    attribute id { report:new-id() },
+    attribute id { new-id() },
     attribute no-id-selector { $noIdSelector },
     $hits
   }
@@ -76,91 +80,111 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
   return $report
 };
 
-declare %updating function report:apply($report as element(report), $rootContext as node(),
+declare %updating function apply($report as element(report), $rootContext as node(),
   $options as map(*))
 {
+  let $ok := check-options($options)
   let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
   let $hits := $report/hit
   for $item in $options('items-selector')($rootContext)
   let $itemId :=
     if($noIdSelector) then
-      report:xpath-location($item)
+      xpath-location($item)
     else
       $options('id-selector')($item)
   let $hit := $hits[@id eq $itemId]
   where $hit
   (: there might be several hits on the descendant axis of an identical item :)
-  return $hit ! report:apply-hit-recommendation(., $item)
+  return $hit ! apply-hit-recommendation(., $item)
 };
 
-declare function report:apply-to-copy($report as element(report), $rootContext as node(),
+declare function apply-to-copy($report as element(report), $rootContext as node(),
   $options as map(*)) as node()
 {
-  $rootContext update (report:apply($report, ., $options))
+  $rootContext update (apply($report, ., $options))
 };
 
 
 
 
 (: ********************** utilities *********************:)
-declare %private %updating function report:apply-hit-recommendation(
+
+declare %private %updating function apply-hit-recommendation(
   $hit as element(hit),
   $item as node())
 {
-  report:check-hit($hit, true()) ! (
+  check-hit($hit) ! (
     let $new := $hit/new
     where $new
     let $new  := $new/child::node()
     let $old := $hit/old/child::node()
-    let $target := report:evaluate-xpath($item, $hit/@xpath)
+    let $target := evaluate-xpath($item, $hit/@xpath)
     return
       (: safety measure - throw error in case original already changed :)
-      if(not(fn:deep-equal($old, $target))) then
-        fn:error((), "Report recommendation is outdated: " || $hit, $hit)
+      if(fn:not(fn:deep-equal($old, $target))) then
+        db:output(error("Report recommendation is outdated: " || $hit))
       else
         (: if $new empty -> delete, else -> replace with $new sequence :)
         replace node $target with $new
   )
 };
 
-declare %private function report:check-hit(
-  $hit    as element(hit),
-  $strict as xs:boolean)
+declare %private function check-hit($hit as element(hit))
   as xs:boolean
 {
-(: TODO implement :)
-  true()
+  if((fn:string-length($hit/@id), fn:string-length($hit/@test-id)) = 0 or fn:empty($hit/@xpath)) then
+    error("Report hit not complete: " || $hit/@id || " " || $hit/@test-id)
+  
+  else if(fn:not($hit/old)) then
+    error("Invalid report structure: " || "missing old element - " || $hit/* ! fn:name(.))
+  
+  else if(fn:count($hit/old/child::node()) ne 1) then
+    error("Invalid report structure: " || "node old must contain exactely one child - " || $hit/old/* ! fn:name(.))
+  
+  else
+    fn:true()
 };
 
-declare %private function report:evaluate-xpath(
+declare function check-options($options as map(*)) as xs:boolean
+{
+  (: TODO implement :)
+  fn:true()
+};
+
+declare function error($msg as xs:string)
+{
+  fn:error($report:ERROR, $msg)
+};
+
+declare %private function evaluate-xpath(
   $n    as node(),
   $path as xs:string
 ) as node()
 {
   if(fn:string-length($path) eq 0) then
     $n
-  else if(not(fn:matches($path, "^/"))) then
-    error((), "Path must start with a slash: " || $path)
+  else if(fn:not(fn:matches($path, "^/"))) then
+    error("Path must start with a slash: " || $path)
   else
-    report:steps($n, tail(fn:tokenize($path, "/")))
+    steps($n, fn:tail(fn:tokenize($path, "/")))
 };
 
-declare %private function report:steps(
+declare %private function steps(
   $n     as element(),
   $steps as xs:string*
 ) as node()
 {
   (: next child step :)
-  let $ch  := head($steps)
+  let $ch  := fn:head($steps)
   (: get positional predicate :)
   let $a   := fn:analyze-string($ch, "\[\d+\]")
   let $pos := fn:replace($a/fn:match, "\[|\]", "")
   (: child position :)
-  let $pos := number(if(fn:string-length($pos) eq 0) then 1 else $pos)
+  let $pos := fn:number(if(fn:string-length($pos) eq 0) then 1 else $pos)
   (: child element name :)
-  let $ch  := $a/fn:non-match/string()
+  let $ch  := $a/fn:non-match/fn:string()
   (: descendant steps :)
-  let $dc  := tail($steps)
+  let $dc  := fn:tail($steps)
   (: evaluate child with given name and position :)
   let $ch  :=
     if($ch eq 'text()') then
@@ -168,34 +192,34 @@ declare %private function report:steps(
     else
       $n/*[fn:name(.) eq $ch][$pos]
   return
-    if(empty($dc) or $ch instance of text()) then $ch else report:steps($ch, $dc)
+    if(fn:empty($dc) or $ch instance of text()) then $ch else steps($ch, $dc)
 };
 
-declare %private function report:timestamp() as xs:dateTime {
+declare %private function timestamp() as xs:dateTime {
   fn:adjust-dateTime-to-timezone(fn:current-dateTime(), xs:dayTimeDuration('PT0H'))
 };
 
-declare %private function report:new-id() as xs:string
+declare %private function new-id() as xs:string
 {
   random:uuid()
-    ! replace(., '-', '')
+    ! fn:replace(., '-', '')
     ! xs:hexBinary(.)
     ! xs:base64Binary(.)
     ! xs:string(.)
-    ! replace(., '=+$', '')
+    ! fn:replace(., '=+$', '')
     ! fn:replace(., "[^A-Za-z0-9]", "_")
 };
 
-declare %private function report:xpath-location($n as node()) as xs:string
+declare %private function xpath-location($n as node()) as xs:string
 {
-  replace(fn:path($n), 'root\(\)|Q\{.*?\}', '')
+  fn:replace(fn:path($n), 'root\(\)|Q\{.*?\}', '')
 };
 
-declare %private function report:escape-pattern($s as xs:string) as xs:string
+declare %private function escape-pattern($s as xs:string) as xs:string
 {
   $s
-    ! replace(., '\[', '\\[')
-    ! replace(., '\]', '\\]')
-    ! replace(., '\(', '\\(')
-    ! replace(., '\)', '\\)')
+    ! fn:replace(., '\[', '\\[')
+    ! fn:replace(., '\]', '\\]')
+    ! fn:replace(., '\(', '\\(')
+    ! fn:replace(., '\)', '\\)')
 };
