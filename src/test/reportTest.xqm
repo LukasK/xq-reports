@@ -1,6 +1,18 @@
 module namespace reportTest = 'reportTest';
-
 import module namespace report = 'report';
+
+declare variable $reportTest:DB := 'test';
+declare variable $reportTest:INPUT := file:base-dir() || '../../etc/data/test.xml';
+
+declare %unit:before %updating function reportTest:prep()
+{
+  db:create($reportTest:DB, $reportTest:INPUT)
+};
+
+declare %unit:after-module %updating function reportTest:clean()
+{
+  db:drop($reportTest:DB)
+};
 
 declare %unit:test function reportTest:report-fix-simple-text()
 {
@@ -119,6 +131,47 @@ declare %unit:test function reportTest:report-fix-nested-without-id()
       <n>text1<n>text2<n/>text3</n></n>text4<n>text5<n>text6<n>text7<n><n/>text8</n></n><n/>text9</n></n>
     </items>
   })
+};
+
+declare %unit:before('apply-to-database') %updating function reportTest:apply-to-database-update()
+{
+  let $doc := db:open($reportTest:DB)//apply-to-database-update/items
+  let $options := reportTest:create-options(
+    (: ITEMS :)
+    function($rootContext as node()) as node()* { $rootContext//entry },
+    (: ID :)
+    function($item as node()) as xs:string { $item/@myId/fn:string() },
+    (: TEST :)
+    map {
+      'id' : 'test-id-normalize-ws',
+      'do' : function($items as node()*, $cache as map(*)) as map(*)* {
+        for $item in $items
+        for $o in $item/text()
+        let $n := fn:normalize-space($o)
+        where $n ne $o
+        return map {
+          'item' : $item,
+          'old'  : $o,
+          'new'  : $n,
+          'type' : 'warning'
+        }
+      }
+    },
+    (: CACHE :)
+    map {}
+  )
+  let $report := report:as-xml($doc, $options)
+  return report:apply($report, $doc, $options)
+};
+declare %unit:test function reportTest:apply-to-database-test()
+{
+  let $cleaned := db:open($reportTest:DB)//apply-to-database-update/items
+  return unit:assert-equals($cleaned,
+    <items>
+      <entry myId="id1">text1.1<sth/>text1.2</entry>
+      <entry myId="id2">text2</entry>
+    </items>
+  )
 };
 
 

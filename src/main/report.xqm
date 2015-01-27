@@ -23,6 +23,7 @@ TODO
 * test cache
 
 PREREQUISITES
+* BaseX 8.0 (why?)
 * 'ids' must be unique
 * preserve whitespaces?
 :)
@@ -74,8 +75,8 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
   return $report
 };
 
-declare %updating function report:apply($report as element(report),
-  $rootContext as node(), $options as map(*))
+declare %updating function report:apply($report as element(report), $rootContext as node(),
+  $options as map(*))
 {
   let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
   let $hits := $report/hit

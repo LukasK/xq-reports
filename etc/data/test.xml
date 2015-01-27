@@ -1,0 +1,8 @@
+<tests>
+  <apply-to-database-update>
+    <items>
+      <entry myId="id1">text1.1  <sth/> text1.2 </entry>
+      <entry myId="id2">text2</entry>
+    </items>
+  </apply-to-database-update>
+</tests>
