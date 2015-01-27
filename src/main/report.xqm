@@ -139,7 +139,7 @@ declare %private function check-hit($hit as element(hit))
     error("Invalid report structure: " || "missing old element - " || $hit/* ! fn:name(.))
   
   else if(fn:count($hit/old/child::node()) ne 1) then
-    error("Invalid report structure: " || "node old must contain exactely one child - " || $hit/old/* ! fn:name(.))
+    error("Invalid report structure: " || "node old must contain exactely one child - " || $hit/old/child::node() ! fn:name(.))
   
   else
     fn:true()
