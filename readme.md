@@ -7,7 +7,7 @@ Schema-oblivious and customizable XML data reporting and modification.
 
 ## Reports in Detail
 ###### attributes (@count, @time, @id, @no-id-selector)
-###### hits (@id, @xpath, @test-id, @type, old, new, info)
+###### hits (@id, @xpath, @test-id, old, new, info)
 
 ## Data Modification
 ###### modification

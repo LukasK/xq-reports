@@ -37,8 +37,7 @@ declare %unit:test function reportTest:report-fix-simple-text()
         return map {
           'item' : $item,
           'old'  : $o,
-          'new'  : $n,
-          'type' : 'warning'
+          'new'  : $n
         }
       }
     },
@@ -77,8 +76,7 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
         return map {
           'item' : $item,
           'old'  : $pos,
-          'new'  : $pos update (replace value of node . with $i),
-          'type' : 'warning'
+          'new'  : $pos update (replace value of node . with $i)
         }
       }
     },
@@ -116,8 +114,7 @@ declare %unit:test function reportTest:report-fix-nested-without-id()
         return map {
           'item' : $item,
           'old'  : $item,
-          'new'  : $new,
-          'type' : 'warning'
+          'new'  : $new
         }
       }
     },
@@ -152,8 +149,7 @@ declare %unit:before('apply-to-database') %updating function reportTest:apply-to
         return map {
           'item' : $item,
           'old'  : $o,
-          'new'  : $n,
-          'type' : 'warning'
+          'new'  : $n
         }
       }
     },
@@ -185,7 +181,7 @@ declare %unit:test function reportTest:report-delete-item()
     function($items as node()) as node()* { $items//entry },
     function($item as node()) as xs:string { $item/@myId/fn:string() },
     map {
-      'id' : 'test-id-normalize-ws',
+      'id' : 'test-id-delete',
       'do' : function($items as node()*, $cache as map(*)) as map(*)* {
         for $item in $items
         for $o in $item/text()
@@ -194,8 +190,7 @@ declare %unit:test function reportTest:report-delete-item()
         return map {
           'item' : $item,
           'old'  : $o,
-          'new'  : (),
-          'type' : 'warning'
+          'new'  : ()
         }
       }
     },

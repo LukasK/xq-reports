@@ -2,7 +2,7 @@ module namespace report = 'report';
 
 (:
 <report count="1" time="2015-01-22T12:18:57.098Z" id="TJikGdmrT3Gi1xOooXqJMw">
-  <hit dbid="000001" matid="MatId_787b08d312m_d703e284" xpath="/LO[1]/LOSchlagW[1]/AWLText[1]" test-id="EN-002" type="warning">
+  <hit dbid="000001" matid="MatId_787b08d312m_d703e284" xpath="/LO[1]/LOSchlagW[1]/AWLText[1]" test-id="EN-002">
     <old>
       <itemToFix>bla</itemToFix>
     </old>
@@ -61,7 +61,6 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
           $oldLoc
       },
       attribute test-id { $testId },
-      attribute type    { .('type') },
       element old       { .('old') },
       element new       { .('new') }[$recommend],
       element info      { .('info') }
