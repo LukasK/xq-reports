@@ -16,15 +16,14 @@ declare %unit:after-module %updating function reportTest:clean()
 
 declare %unit:test function reportTest:report-fix-simple-text()
 {
-  let $doc := document {
+  let $doc :=
     <items>
       <entry myId="id1">text1.1  <sth/> text1.2 </entry>
       <entry myId="id2">text2</entry>
     </items>
-  }
   let $options := reportTest:create-options(
     (: ITEMS :)
-    function($rootContext as node()) as node()* { $rootContext//entry },
+    function($items as node()) as node()* { $items//entry },
     (: ID :)
     function($item as node()) as xs:string { $item/@myId/fn:string() },
     (: TEST :)
@@ -48,25 +47,24 @@ declare %unit:test function reportTest:report-fix-simple-text()
   )
   let $report := report:as-xml($doc, $options)
   let $cleaned := report:apply-to-copy($report, $doc, $options)
-  return unit:assert-equals($cleaned, document {
+  return unit:assert-equals($cleaned,
     <items>
       <entry myId="id1">text1.1<sth/>text1.2</entry>
       <entry myId="id2">text2</entry>
     </items>
-  })
+  )
 };
 
 declare %unit:test function reportTest:report-fix-global-element-ordering()
 {
-  let $doc := document {
+  let $doc :=
     <items>
       <entry myId="id1"><pos>27</pos></entry>
       <entry myId="id3"><pos>4</pos></entry>
       <entry myId="id2"><pos>6</pos></entry>
     </items>
-  }
   let $options := reportTest:create-options(
-    function($rootContext as node()) as node()* { $rootContext/items/entry },
+    function($items as node()) as node()* { $items/entry },
     function($item as node()) as xs:string { $item/@myId/fn:string() },
     map {
       'id' : 'test-id-global-order',
@@ -87,26 +85,25 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
   )
   let $report := report:as-xml($doc, $options)
   let $cleaned := report:apply-to-copy($report, $doc, $options)
-  return unit:assert-equals($cleaned, document {
+  return unit:assert-equals($cleaned,
     <items>
       <entry myId="id1"><pos>3</pos></entry>
       <entry myId="id3"><pos>1</pos></entry>
       <entry myId="id2"><pos>2</pos></entry>
     </items>
-  })
+  )
 };
 
 declare %unit:test function reportTest:report-fix-nested-without-id()
 {
-  let $doc := document {
+  let $doc :=
     <items>
       <n> text1<n> text2<n/> text3 </n></n>
       text4
       <n> text5<n> text6<n> text7<n><n/> text8 </n></n><n/> text9 </n></n>
     </items>
-  }
   let $options := reportTest:create-options(
-    function($rootContext as node()) as node()* { $rootContext/items//text() },
+    function($items as node()) as node()* { $items//text() },
     (),
     map {
       'id' : 'test-id-nested-without-id',
@@ -126,11 +123,11 @@ declare %unit:test function reportTest:report-fix-nested-without-id()
   )
   let $report := report:as-xml($doc, $options)
   let $cleaned := report:apply-to-copy($report, $doc, $options)
-  return unit:assert-equals($cleaned, document {
+  return unit:assert-equals($cleaned,
     <items>
       <n>text1<n>text2<n/>text3</n></n>text4<n>text5<n>text6<n>text7<n><n/>text8</n></n><n/>text9</n></n>
     </items>
-  })
+  )
 };
 
 declare %unit:before('apply-to-database') %updating function reportTest:apply-to-database-update()
@@ -138,7 +135,7 @@ declare %unit:before('apply-to-database') %updating function reportTest:apply-to
   let $doc := db:open($reportTest:DB)//apply-to-database-update/items
   let $options := reportTest:create-options(
     (: ITEMS :)
-    function($rootContext as node()) as node()* { $rootContext//entry },
+    function($items as node()) as node()* { $items//entry },
     (: ID :)
     function($item as node()) as xs:string { $item/@myId/fn:string() },
     (: TEST :)
