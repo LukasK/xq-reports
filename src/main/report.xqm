@@ -14,17 +14,20 @@ module namespace report = 'report';
 </report>
 
 
-TODO
-* schema .xsd for report
-* checks/error handling
-* replace old node with empty/sequence
-* apply report: check if ids in context unique (or during report creation?)
-* test cache
-
 PREREQUISITES
 * BaseX 8.0 (why?)
 * 'ids' must be unique
 * preserve whitespaces?
+
+
+TODO
+* replace old node with empty/sequence
+* checks/error handling
+  pipe through custom error function
+
+* schema .xsd for report
+* apply report: check if ids in context unique (or during report creation?)
+* test cache
 :)
 
 
@@ -37,6 +40,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
   (: operate w/o ids --> items are identified via location steps :)
   let $noIdSelector := fn:empty($options('id-selector'))
   let $testF := $test('do')
+  let $recommend := $options('recommend')
   let $cache := $options('cache')
   
   let $items := $options('items-selector')($rootContext)
@@ -59,7 +63,7 @@ declare function report:as-xml($rootContext as node(), $options as map(*))
       attribute test-id { $testId },
       attribute type    { .('type') },
       element old       { .('old') },
-      if(.('new')) then element new { .('new') } else (),
+      element new       { .('new') }[$recommend],
       element info      { .('info') }
     }
   
@@ -106,9 +110,9 @@ declare %private %updating function report:apply-hit-recommendation(
   $item as node())
 {
   report:check-hit($hit, true()) ! (
-    let $new  := $hit/new/child::node()
-    (: TODO do not replace with empty sequence! (for now..) :)
+    let $new := $hit/new
     where $new
+    let $new  := $new/child::node()
     let $old := $hit/old/child::node()
     let $target := report:evaluate-xpath($item, $hit/@xpath)
     return
@@ -116,6 +120,7 @@ declare %private %updating function report:apply-hit-recommendation(
       if(not(fn:deep-equal($old, $target))) then
         fn:error((), "Report recommendation is outdated: " || $hit, $hit)
       else
+        (: if $new empty -> delete, else -> replace with $new sequence :)
         replace node $target with $new
   )
 };
