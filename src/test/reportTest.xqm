@@ -244,6 +244,44 @@ declare %unit:test function reportTest:report-delete-item2()
   )
 };
 
+declare %unit:test function reportTest:report-delete-replace()
+{
+  let $doc :=
+    <items>
+      <entry myId="id1">text1.1  <sth/> text1.2 </entry>
+      <entry myId="id2">text2</entry>
+    </items>
+  let $options := reportTest:create-options(
+    function($items as node()) as node()* { $items//entry },
+    function($item as node()) as xs:string { $item/@myId/fn:string() },
+    map {
+      'id' : 'test-id-delete',
+      'do' : function($items as node()*, $cache as map(*)) as map(*)* {
+        for $item in $items
+        let $fail := fn:not(
+          every $t in $item/text() satisfies $t eq fn:normalize-space($t)
+        )
+        where $fail
+        return map {
+          'item' : $item,
+          'old'  : $item,
+          'new'  : <entry myId="idXX">default</entry>
+        }
+      }
+    },
+    fn:true(),
+    map {}
+  )
+  let $report := report:as-xml($doc, $options)
+  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  return unit:assert-equals($cleaned,
+    <items>
+      <entry myId="idXX">default</entry>
+      <entry myId="id2">text2</entry>
+    </items>
+  )
+};
+
 
 
 (: ************************* utilities ************************ :)

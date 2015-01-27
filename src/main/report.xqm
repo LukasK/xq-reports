@@ -21,7 +21,6 @@ PREREQUISITES
 
 
 TODO
-* replace old node with empty/sequence
 * checks/error handling
   pipe through custom error function
 
