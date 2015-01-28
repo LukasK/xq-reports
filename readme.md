@@ -48,14 +48,12 @@ report:as-xml(
 Result:
 
 ```xml
-<report count="2" time="2015-01-28T13:30:25.073Z" id="q_vqe1kCQ_m_dexRuDHyZA" no-id-selector="true">
-  <hit id="/n[1]/text()[1]" xpath="" test-id="test1">
+<report count="2" time="2015-01-28T14:48:50.074Z" id="dx6_ic8SSziStanAuRSdgw" no-id-selector="true">
+  <hit item-id="/n[1]/text()[1]" xpath="" test-id="test1">
     <old> text1</old>
-    <info/>
   </hit>
-  <hit id="/n[1]/n[1]/text()[1]" xpath="" test-id="test1">
+  <hit item-id="/n[1]/n[1]/text()[1]" xpath="" test-id="test1">
     <old> text2</old>
-    <info/>
   </hit>
 </report>
 ```

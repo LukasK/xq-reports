@@ -17,7 +17,9 @@ declare default function namespace 'report';
 
 TODO
 * README
-* schema .xsd for report (drop check-hit for a schema check of the report)
+* schema changes:
+  * move test-id to report element
+  * change `hit` to `item`
 * check valid options
 * make optional parameters:
   * CACHE
@@ -31,7 +33,8 @@ TODO
 * code TODOs
 :)
 
-declare variable $report:ERROR := xs:QName("ERROR");
+declare variable $report:ERROR  := xs:QName("ERROR");
+declare variable $report:SCHEMA := file:base-dir() || '../../etc/report.xsd';
 
 
 declare function as-xml($rootContext as node(), $options as map(*))
@@ -87,6 +90,8 @@ declare %updating function apply($report as element(report), $rootContext as nod
   $options as map(*))
 {
   let $ok := check-options($options)
+  let $validate-report := fn:string-join(validate:xsd-info($report, fn:doc($report:SCHEMA)), "&#xA;")
+  let $ok := if($validate-report) then error($validate-report) else fn:true()
   let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
   let $hits := $report/hit
   for $item in $options('items-selector')($rootContext)
@@ -116,20 +121,18 @@ declare %private %updating function apply-hit-recommendation(
   $hit as element(hit),
   $item as node())
 {
-  check-hit($hit) ! (
-    let $new := $hit/new
-    where $new
-    let $new  := $new/child::node()
-    let $old := $hit/old/child::node()
-    let $target := evaluate-xpath($item, $hit/@xpath)
-    return
-      (: safety measure - throw error in case original already changed :)
-      if(fn:not(fn:deep-equal($old, $target))) then
-        db:output(error("Report recommendation is outdated: " || $hit))
-      else
-        (: if $new empty -> delete, else -> replace with $new sequence :)
-        replace node $target with $new
-  )
+  let $new := $hit/new
+  where $new
+  let $new  := $new/child::node()
+  let $old := $hit/old/child::node()
+  let $target := evaluate-xpath($item, $hit/@xpath)
+  return
+    (: safety measure - throw error in case original already changed :)
+    if(fn:not(fn:deep-equal($old, $target))) then
+      db:output(error("Report recommendation is outdated: " || $hit))
+    else
+      (: if $new empty -> delete, else -> replace with $new sequence :)
+      replace node $target with $new
 };
 
 declare %private function check-hit($hit as element(hit))
@@ -150,7 +153,7 @@ declare %private function check-hit($hit as element(hit))
 
 declare function check-options($options as map(*)) as xs:boolean
 {
-  (: TODO implement :)
+  (: TODO implement / check typing? :)
   fn:true()
 };
 

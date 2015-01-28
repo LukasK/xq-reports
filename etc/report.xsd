@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="report">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="hit" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="old"/>
+              <xs:element name="new" minOccurs="0"/>
+              <xs:element name="info" minOccurs="0"/>
+            </xs:sequence>
+            <xs:attribute name="item-id" type="xs:string" use="required"/>
+            <xs:attribute name="xpath" type="xs:string" use="required"/>
+            <xs:attribute name="test-id" type="xs:string" use="required"/>
+          </xs:complexType>
+        </xs:element>
+			</xs:sequence>
+      <xs:attribute name="time" type="xs:dateTime" use="required"/>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+      <xs:attribute name="no-id-selector" type="xs:boolean" use="required"/>
+      <xs:attribute name="count" type="xs:integer" use="required"/>
+		</xs:complexType>
+  </xs:element>
+</xs:schema>
