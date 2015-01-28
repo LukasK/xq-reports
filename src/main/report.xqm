@@ -49,6 +49,8 @@ declare function as-xml($rootContext as node(), $options as map(*))
   let $items := $options('items-selector')($rootContext)
   let $items := if($noIdSelector) then $items else $items ! (. update ())
   let $hits := $testF($items, $cache) ! element hit {
+    let $info := .('info')
+    return (
       attribute item-id {
         let $item := .('item')
         return if($noIdSelector) then
@@ -66,8 +68,9 @@ declare function as-xml($rootContext as node(), $options as map(*))
       attribute test-id { $testId },
       element old       { .('old') },
       element new       { .('new') }[$recommend],
-      element info      { .('info') }
-    }
+      element info      { .('info') }[$info]
+    )
+  }
   
   let $report := element report {
     attribute count { fn:count($hits) },
