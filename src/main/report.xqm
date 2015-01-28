@@ -68,7 +68,6 @@ declare function as-xml($rootContext as node(), $options as map(*))
         else
           $oldLoc
       },
-      attribute test-id { $testId },
       element old       { .('old') },
       element new       { .('new') }[$recommend],
       element info      { .('info') }[$info]
@@ -80,6 +79,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
     attribute time { $timestamp },
     attribute id { new-id() },
     attribute no-id-selector { $noIdSelector },
+    attribute test-id { $testId },
     $hits
   }
   

@@ -48,11 +48,11 @@ report:as-xml(
 Result:
 
 ```xml
-<report count="2" time="2015-01-28T14:48:50.074Z" id="dx6_ic8SSziStanAuRSdgw" no-id-selector="true">
-  <hit item-id="/n[1]/text()[1]" xpath="" test-id="test1">
+<report count="2" time="2015-01-28T15:02:07.342Z" id="3SgsPhTIQHuM_hcg7_rEXw" no-id-selector="true" test-id="test1">
+  <hit item-id="/n[1]/text()[1]" xpath="">
     <old> text1</old>
   </hit>
-  <hit item-id="/n[1]/n[1]/text()[1]" xpath="" test-id="test1">
+  <hit item-id="/n[1]/n[1]/text()[1]" xpath="">
     <old> text2</old>
   </hit>
 </report>
@@ -69,11 +69,11 @@ Result:
 * **@time**: Time of creation.
 * **@id**: Unique report id.
 * **@no-id-selector**: Items to-be-reported are identified via XPath location steps, not ids. As a consequence, changing the input context between the creation and application of a report may lead to unexpected results.
+* **@test-id**: Id of the performed test.
 
 #### Element: hit
 * **@item-id**: Unique Identification of an `item`. Can either be a string value that is unique to the `item`, or a unique XPath location step (see report/@no-id-selector).
 * **@xpath**: Location of `new` element relative to the `item` with `@item-id`.
-* **@test-id**: Id of the performed test.
 * **old**: Input node at the location `@xpath`, relative to the `item` with `@item-id`.
 * **new**: Replacing node sequence (0-*) for the child node of `old`. The child node of `old` is either deleted or replaced with one or several nodes.
 * **info**: Additional info for reference.
