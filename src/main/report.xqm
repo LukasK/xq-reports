@@ -1,3 +1,7 @@
+(:~
+ : Report module.
+ : @author Lukas Kircher, BaseX GmbH, 2012-15
+ :)
 module namespace report = 'report';
 declare default function namespace 'report';
 

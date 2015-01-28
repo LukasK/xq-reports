@@ -1,3 +1,7 @@
+(:~
+ : Report module tests.
+ : @author Lukas Kircher, BaseX GmbH, 2012-14
+ :)
 module namespace reportTest = 'reportTest';
 import module namespace report = 'report';
 
