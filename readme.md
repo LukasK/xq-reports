@@ -49,7 +49,8 @@ report:as-xml(
           'new'  : $new
         }
       }
-    }
+    },
+    'recommend': fn:true()
   }
 )
 ```
@@ -57,12 +58,14 @@ report:as-xml(
 Result:
 
 ```xml
-<report count="2" time="2015-01-28T15:02:07.342Z" id="3SgsPhTIQHuM_hcg7_rEXw" no-id-selector="true" test-id="test1">
+<report count="2" time="2015-01-28T17:07:24.387Z" id="X2aJME9uRryIMXM92XXjrA" no-id-selector="true" test-id="test1">
   <item item-id="/n[1]/text()[1]" xpath="">
     <old> text1</old>
+    <new>text1</new>
   </item>
   <item item-id="/n[1]/n[1]/text()[1]" xpath="">
     <old> text2</old>
+    <new>text2</new>
   </item>
 </report>
 ```
