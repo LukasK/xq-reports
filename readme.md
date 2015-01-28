@@ -49,12 +49,12 @@ Result:
 
 ```xml
 <report count="2" time="2015-01-28T15:02:07.342Z" id="3SgsPhTIQHuM_hcg7_rEXw" no-id-selector="true" test-id="test1">
-  <hit item-id="/n[1]/text()[1]" xpath="">
+  <item item-id="/n[1]/text()[1]" xpath="">
     <old> text1</old>
-  </hit>
-  <hit item-id="/n[1]/n[1]/text()[1]" xpath="">
+  </item>
+  <item item-id="/n[1]/n[1]/text()[1]" xpath="">
     <old> text2</old>
-  </hit>
+  </item>
 </report>
 ```
 #### Reporting descendant text nodes of specific elements
@@ -65,13 +65,13 @@ Result:
 
 ## Reports in Detail
 #### Element: report
-* **@count**: Number of `hit` elements in the report (=reported errors).
+* **@count**: Number of `item` elements in the report (=reported errors).
 * **@time**: Time of creation.
 * **@id**: Unique report id.
 * **@no-id-selector**: Items to-be-reported are identified via XPath location steps, not ids. As a consequence, changing the input context between the creation and application of a report may lead to unexpected results.
 * **@test-id**: Id of the performed test.
 
-#### Element: hit
+#### Element: item
 * **@item-id**: Unique Identification of an `item`. Can either be a string value that is unique to the `item`, or a unique XPath location step (see report/@no-id-selector).
 * **@xpath**: Location of `new` element relative to the `item` with `@item-id`.
 * **old**: Input node at the location `@xpath`, relative to the `item` with `@item-id`.

@@ -3,7 +3,7 @@
   <xs:element name="report">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="hit" minOccurs="0" maxOccurs="unbounded">
+				<xs:element name="item" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:sequence>
               <xs:element name="old" minOccurs="1"/>

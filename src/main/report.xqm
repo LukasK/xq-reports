@@ -2,23 +2,9 @@ module namespace report = 'report';
 declare default function namespace 'report';
 
 (:
-<report count="2" time="2015-01-27T14:34:36.664Z" id="fSaZRLanR3223NUsz26DKw" no-id-selector="false">
-  <hit id="id1" xpath="/text()[1]" test-id="test-id-normalize-ws" type="warning">
-    <old>text1.1  </old>
-    <new/>
-    <info/>
-  </hit>
-  <hit id="id1" xpath="/text()[2]" test-id="test-id-normalize-ws" type="warning">
-    <old> text1.2 </old>
-    <new/>
-    <info/>
-  </hit>
-</report>
-
 TODO
 * README
 * schema changes:
-  * move test-id to report element
   * change `hit` to `item`
 * check valid options
 * make optional parameters:
@@ -51,7 +37,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
   
   let $items := $options('items-selector')($rootContext)
   let $items := if($noIdSelector) then $items else $items ! (. update ())
-  let $hits := $testF($items, $cache) ! element hit {
+  let $reported-items := $testF($items, $cache) ! element item {
     let $info := .('info')
     return (
       attribute item-id {
@@ -75,12 +61,12 @@ declare function as-xml($rootContext as node(), $options as map(*))
   }
   
   let $report := element report {
-    attribute count { fn:count($hits) },
+    attribute count { fn:count($reported-items) },
     attribute time { $timestamp },
     attribute id { new-id() },
     attribute no-id-selector { $noIdSelector },
     attribute test-id { $testId },
-    $hits
+    $reported-items
   }
   
   return $report
@@ -92,17 +78,17 @@ declare %updating function apply($report as element(report), $rootContext as nod
   let $ok := check-options($options) and validate($report)
   
   let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
-  let $hits := $report/hit
+  let $reported-items := $report/item
   for $item in $options('items-selector')($rootContext)
   let $itemId :=
     if($noIdSelector) then
       xpath-location($item)
     else
       $options('id-selector')($item)
-  let $hit := $hits[@item-id eq $itemId]
-  where $hit
-  (: there might be several hits on the descendant axis of an identical item :)
-  return $hit ! apply-hit-recommendation(., $item)
+  let $reported-item := $reported-items[@item-id eq $itemId]
+  where $reported-item
+  (: there might be several items on the descendant axis of an identical item :)
+  return $reported-item ! apply-recommendation(., $item)
 };
 
 declare function apply-to-copy($report as element(report), $rootContext as node(),
@@ -116,19 +102,19 @@ declare function apply-to-copy($report as element(report), $rootContext as node(
 
 (: ********************** utilities *********************:)
 
-declare %private %updating function apply-hit-recommendation(
-  $hit as element(hit),
+declare %private %updating function apply-recommendation(
+  $reported-item as element(item),
   $item as node())
 {
-  let $new := $hit/new
+  let $new := $reported-item/new
   where $new
   let $new  := $new/child::node()
-  let $old := $hit/old/child::node()
-  let $target := evaluate-xpath($item, $hit/@xpath)
+  let $old := $reported-item/old/child::node()
+  let $target := evaluate-xpath($item, $reported-item/@xpath)
   return
     (: safety measure - throw error in case original already changed :)
     if(fn:not(fn:deep-equal($old, $target))) then
-      db:output(error("Report recommendation is outdated: " || $hit))
+      db:output(error("Report recommendation is outdated: " || $reported-item))
     else
       (: if $new empty -> delete, else -> replace with $new sequence :)
       replace node $target with $new
@@ -138,22 +124,6 @@ declare function validate($report as element(report)) as xs:boolean
 {
   let $v := fn:string-join(validate:xsd-info($report, fn:doc($report:SCHEMA)), "&#xA;")
   return if($v) then error($v) else fn:true()
-};
-
-declare %private function check-hit($hit as element(hit))
-  as xs:boolean
-{
-  if((fn:string-length($hit/@item-id), fn:string-length($hit/@test-id)) = 0 or fn:empty($hit/@xpath)) then
-    error("Report hit not complete: " || $hit/@id || " " || $hit/@test-id)
-  
-  else if(fn:not($hit/old)) then
-    error("Invalid report structure: " || "missing old element - " || $hit/* ! fn:name(.))
-  
-  else if(fn:count($hit/old/child::node()) ne 1) then
-    error("Invalid report structure: " || "node old must contain exactely one child - " || $hit/old/child::node() ! fn:name(.))
-  
-  else
-    fn:true()
 };
 
 declare function check-options($options as map(*)) as xs:boolean
