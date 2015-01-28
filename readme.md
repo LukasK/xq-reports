@@ -2,6 +2,7 @@
 
 Schema-oblivious and customizable XML data reporting and modification.
 
+## Introduction
 #### What can I do with xq-reports?
 
 * Reveal inconsistencies in XML data. Fragments or database nodes are all treated the same.
@@ -9,15 +10,23 @@ Schema-oblivious and customizable XML data reporting and modification.
 * Use the report for communication, archiving or modify recommended fixes manually.
 * Apply a report to the original input data - even if this input has been modified in the meantime.
 
-#### Prerequisites
+#### More details please?
 
-BaseX 8.0 (sure?)
+Imagine a simple report listing all nodes that have some text on the child axis:
+
+```xml
+<report count="1" test-id="test1">
+  <item item-id="/node1[1]" xpath="">
+    <old><node1>with some text</node1></old>
+    <new><node1>modified text</node1></new>
+  </item>
+</report>
+```
+
+An `item` is the atomic unit of a report. It represents an arbitrary DOM node in an XML document. `Items` are identified by their unique `@item-id`, in this case an XPath location step. The `old` element shows the original input `item`. The `new` element is optional and recommends a modification of the `item`. If we apply the report to the input, the old `item` is substituted by the new.
 
 ## Quick Examples
-#### Most basic example
-
-Report all non-normalized text nodes in an arbitrary context.
-
+#### Normalizing text nodes in an arbitrary context
 ```xquery
 import module namespace report = 'report';
 report:as-xml(
@@ -60,7 +69,7 @@ Result:
 #### Reporting descendant text nodes of specific elements
 #### Modifying a document
 #### Modifying a database
-#### Modifying items depending on other items
+#### Modifying items depending on other items (f.i. ordering)
 #### Using caches
 
 ## Reports in Detail
