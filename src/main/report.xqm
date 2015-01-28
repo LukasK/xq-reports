@@ -33,7 +33,7 @@ TODO
 * code TODOs
 :)
 
-declare variable $report:ERROR  := xs:QName("ERROR");
+declare variable $report:ERROR  := xs:QName("XQREPORT");
 declare variable $report:SCHEMA := file:base-dir() || '../../etc/report.xsd';
 
 
@@ -89,9 +89,8 @@ declare function as-xml($rootContext as node(), $options as map(*))
 declare %updating function apply($report as element(report), $rootContext as node(),
   $options as map(*))
 {
-  let $ok := check-options($options)
-  let $validate-report := fn:string-join(validate:xsd-info($report, fn:doc($report:SCHEMA)), "&#xA;")
-  let $ok := if($validate-report) then error($validate-report) else fn:true()
+  let $ok := check-options($options) and validate($report)
+  
   let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
   let $hits := $report/hit
   for $item in $options('items-selector')($rootContext)
@@ -133,6 +132,12 @@ declare %private %updating function apply-hit-recommendation(
     else
       (: if $new empty -> delete, else -> replace with $new sequence :)
       replace node $target with $new
+};
+
+declare function validate($report as element(report)) as xs:boolean
+{
+  let $v := fn:string-join(validate:xsd-info($report, fn:doc($report:SCHEMA)), "&#xA;")
+  return if($v) then error($v) else fn:true()
 };
 
 declare %private function check-hit($hit as element(hit))

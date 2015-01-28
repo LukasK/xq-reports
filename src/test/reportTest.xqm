@@ -14,6 +14,17 @@ declare %unit:after-module %updating function reportTest:clean()
   db:drop($reportTest:DB)
 };
 
+(:declare %unit:test('expected', 'XQREPORT') function reportTest:report-schema-error1()
+{
+  report:validate(
+    <report count="1" time="2015-01-28T15:02:07.342Z" id="3SgsPhTIQHuM_hcg7_rEXw" no-id-selector="true">
+      <hit item-id="/n[1]/text()[1]" xpath="" test-id="test1">
+        <old><one/>two</old>
+      </hit>
+    </report>
+  )
+};:)
+
 declare %unit:test function reportTest:report-fix-simple-text()
 {
   let $doc :=

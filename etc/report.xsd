@@ -6,7 +6,7 @@
 				<xs:element name="hit" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="old"/>
+              <xs:element name="old" minOccurs="1"/>
               <xs:element name="new" minOccurs="0"/>
               <xs:element name="info" minOccurs="0"/>
             </xs:sequence>
