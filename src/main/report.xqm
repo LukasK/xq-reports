@@ -15,19 +15,16 @@ declare default function namespace 'report';
   </hit>
 </report>
 
-
-PREREQUISITES
-* BaseX 8.0 (why?)
-* 'ids' must be unique
-* xml:space='preserve' for mixed content w/ un-normalized texts
-
-
 TODO
 * README
 * schema .xsd for report (drop check-hit for a schema check of the report)
 * check valid options
+* make optional parameters:
+  * CACHE
+  * ID-SELECTOR
+  * RECOMMEND
 * unit tests
-  * recommend/missing <new/>
+  * no recommend / recommend=true/false / missing <new/>
   * report schema
   * cache
   * expected fails
@@ -46,13 +43,13 @@ declare function as-xml($rootContext as node(), $options as map(*))
   (: operate w/o ids --> items are identified via location steps :)
   let $noIdSelector := fn:empty($options('id-selector'))
   let $testF := $test('do')
-  let $recommend := $options('recommend')
+  let $recommend := $options('recommend') and fn:not(fn:empty($options('recommend')))
   let $cache := $options('cache')
   
   let $items := $options('items-selector')($rootContext)
   let $items := if($noIdSelector) then $items else $items ! (. update ())
   let $hits := $testF($items, $cache) ! element hit {
-      attribute id {
+      attribute item-id {
         let $item := .('item')
         return if($noIdSelector) then
           xpath-location($item)
@@ -95,7 +92,7 @@ declare %updating function apply($report as element(report), $rootContext as nod
       xpath-location($item)
     else
       $options('id-selector')($item)
-  let $hit := $hits[@id eq $itemId]
+  let $hit := $hits[@item-id eq $itemId]
   where $hit
   (: there might be several hits on the descendant axis of an identical item :)
   return $hit ! apply-hit-recommendation(., $item)
@@ -135,7 +132,7 @@ declare %private %updating function apply-hit-recommendation(
 declare %private function check-hit($hit as element(hit))
   as xs:boolean
 {
-  if((fn:string-length($hit/@id), fn:string-length($hit/@test-id)) = 0 or fn:empty($hit/@xpath)) then
+  if((fn:string-length($hit/@item-id), fn:string-length($hit/@test-id)) = 0 or fn:empty($hit/@xpath)) then
     error("Report hit not complete: " || $hit/@id || " " || $hit/@test-id)
   
   else if(fn:not($hit/old)) then
