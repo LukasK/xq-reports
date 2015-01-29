@@ -8,8 +8,9 @@ declare default function namespace 'report';
 (:
 TODO
 * README
-* schema changes:
-  * change `hit` to `item`
+* make it possible to insert items (w/o old one ...)
+
+
 * check valid options
 * make optional parameters:
   * CACHE
@@ -31,15 +32,17 @@ declare function as-xml($rootContext as node(), $options as map(*))
 {
   let $ok := check-options($options)
   let $timestamp := timestamp()
-  let $test := $options('test')
-  let $testId := $test('id')
-  (: operate w/o ids --> items are identified via location steps :)
-  let $noIdSelector := fn:empty($options('id-selector'))
-  let $testF := $test('do')
-  let $recommend := $options('recommend') and fn:not(fn:empty($options('recommend')))
-  let $cache := $options('cache')
   
-  let $items := $options('items-selector')($rootContext)
+  (: OPTIONS :)
+  let $recommend    := $options('recommend') and fn:not(fn:empty($options('recommend')))
+  let $test         := $options('test')
+  let $idSelectorF  := $options('id-selector')
+  let $noIdSelector := fn:empty($idSelectorF)
+  let $items        := $options('items-selector')($rootContext)
+  let $cache        := $options('cache')
+  let $testId       := $test('id')
+  let $testF        := $test('do')
+  
   let $items := if($noIdSelector) then $items else $items ! (. update ())
   let $reported-items := $testF($items, $cache) ! element item {
     let $info := .('info')
@@ -49,7 +52,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
         return if($noIdSelector) then
           xpath-location($item)
         else
-          $options('id-selector')($item)
+          $idSelectorF($item)
       },
       attribute xpath   {
         let $oldLoc := xpath-location(.('old'))
