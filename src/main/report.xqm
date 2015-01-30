@@ -8,7 +8,6 @@ declare default function namespace 'report';
 (:
 TODO
 * README examples
-* make it possible to insert items (w/o old one ...)
 * check test function return types
 
 * make optional parameters:
@@ -38,7 +37,6 @@ declare variable $report:ITEM       := 'item';
 declare variable $report:OLD        := 'old';
 declare variable $report:NEW        := 'new';
 declare variable $report:INFO       := 'info';
-declare variable $report:INSERT     := 'insert';
 
 
 declare function as-xml($rootContext as node(), $options as map(*))
@@ -57,25 +55,27 @@ declare function as-xml($rootContext as node(), $options as map(*))
   
   let $items := if($noIdSelector) then $items else $items ! (. update ())
   let $reported-items := $testF($items, $cache) ! element item {
+    let $item := .($report:ITEM)
+    let $old  := .($report:OLD)
+    let $new  := .($report:NEW)
     let $info := .($report:INFO)
     return (
       attribute item-id {
-        let $item := .($report:ITEM)
-        return if($noIdSelector) then
+        if($noIdSelector) then
           xpath-location($item)
         else
           $idSelectorF($item)
       },
       attribute xpath   {
-        let $oldLoc := xpath-location(.($report:OLD))
+        let $oldLoc := xpath-location($old)
         return if($noIdSelector) then
-          fn:replace($oldLoc, escape-location-path-pattern(xpath-location(.($report:ITEM))), '')
+          fn:replace($oldLoc, escape-location-path-pattern(xpath-location($item)), '')
         else
           $oldLoc
       },
-      element old       { .($report:OLD) },
-      element new       { .($report:NEW) }[$recommend],
-      element info      { .($report:INFO) }[$info]
+      element old       { $old },
+      element new       { $new }[$recommend],
+      element info      { $info }[$info]
     )
   }
   
