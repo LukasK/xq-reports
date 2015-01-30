@@ -8,11 +8,10 @@ declare default function namespace 'report';
 (:
 TODO
 * README examples
-* options map, parameter typing ...
 * make it possible to insert items (w/o old one ...)
+* check test function return types
+* remove reportTest options wrapper code
 
-
-* check valid options
 * make optional parameters:
   * CACHE
   * ID-SELECTOR
@@ -40,6 +39,7 @@ declare variable $report:ITEM       := 'item';
 declare variable $report:OLD        := 'old';
 declare variable $report:NEW        := 'new';
 declare variable $report:INFO       := 'info';
+declare variable $report:INSERT     := 'insert';
 
 
 declare function as-xml($rootContext as node(), $options as map(*))
