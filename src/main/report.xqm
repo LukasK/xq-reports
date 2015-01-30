@@ -8,6 +8,7 @@ declare default function namespace 'report';
 (:
 TODO
 * README examples
+* options map, parameter typing ...
 * make it possible to insert items (w/o old one ...)
 
 
@@ -27,6 +28,19 @@ TODO
 declare variable $report:ERROR  := xs:QName("XQREPORT");
 declare variable $report:SCHEMA := file:base-dir() || '../../etc/report.xsd';
 
+(: option keys :)
+declare variable $report:ITEMS      := 'items-selector';
+declare variable $report:ITEMID     := 'id-selector';
+declare variable $report:TEST       := 'test';
+declare variable $report:TESTID     := 'test-id';
+declare variable $report:RECOMMEND  := 'recommend';
+declare variable $report:CACHE      := 'cache';
+(: test result keys :)
+declare variable $report:ITEM       := 'item';
+declare variable $report:OLD        := 'old';
+declare variable $report:NEW        := 'new';
+declare variable $report:INFO       := 'info';
+
 
 declare function as-xml($rootContext as node(), $options as map(*))
 {
@@ -34,35 +48,35 @@ declare function as-xml($rootContext as node(), $options as map(*))
   let $timestamp := timestamp()
   
   (: OPTIONS :)
-  let $recommend    := $options('recommend') and fn:not(fn:empty($options('recommend')))
-  let $idSelectorF  := $options('id-selector')
+  let $recommend    := $options($report:RECOMMEND) and fn:not(fn:empty($options($report:RECOMMEND)))
+  let $idSelectorF  := $options($report:ITEMID)
   let $noIdSelector := fn:empty($idSelectorF)
-  let $items        := $options('items-selector')($rootContext)
-  let $cache        := $options('cache')
-  let $testId       := $options('test-id')
-  let $testF        := $options('test')
+  let $items        := $options($report:ITEMS)($rootContext)
+  let $cache        := $options($report:CACHE)
+  let $testId       := $options($report:TESTID)
+  let $testF        := $options($report:TEST)
   
   let $items := if($noIdSelector) then $items else $items ! (. update ())
   let $reported-items := $testF($items, $cache) ! element item {
-    let $info := .('info')
+    let $info := .($report:INFO)
     return (
       attribute item-id {
-        let $item := .('item')
+        let $item := .($report:ITEM)
         return if($noIdSelector) then
           xpath-location($item)
         else
           $idSelectorF($item)
       },
       attribute xpath   {
-        let $oldLoc := xpath-location(.('old'))
+        let $oldLoc := xpath-location(.($report:OLD))
         return if($noIdSelector) then
-          fn:replace($oldLoc, escape-location-path-pattern(xpath-location(.('item'))), '')
+          fn:replace($oldLoc, escape-location-path-pattern(xpath-location(.($report:ITEM))), '')
         else
           $oldLoc
       },
-      element old       { .('old') },
-      element new       { .('new') }[$recommend],
-      element info      { .('info') }[$info]
+      element old       { .($report:OLD) },
+      element new       { .($report:NEW) }[$recommend],
+      element info      { .($report:INFO) }[$info]
     )
   }
   
@@ -85,12 +99,12 @@ declare %updating function apply($report as element(report), $rootContext as nod
   
   let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
   let $reported-items := $report/item
-  for $item in $options('items-selector')($rootContext)
+  for $item in $options($report:ITEMS)($rootContext)
   let $itemId :=
     if($noIdSelector) then
       xpath-location($item)
     else
-      $options('id-selector')($item)
+      $options($report:ITEMID)($item)
   let $reported-item := $reported-items[@item-id eq $itemId]
   where $reported-item
   (: there might be several items on the descendant axis of an identical item :)

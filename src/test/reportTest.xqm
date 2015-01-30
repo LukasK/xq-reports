@@ -5,7 +5,7 @@
 module namespace reportTest = 'reportTest';
 import module namespace report = 'report';
 
-declare variable $reportTest:DB := 'test';
+declare variable $reportTest:DB := $report:TEST;
 declare variable $reportTest:INPUT := file:base-dir() || '../../etc/data/test.xml';
 
 declare %unit:before %updating function reportTest:prep()
@@ -50,9 +50,9 @@ declare %unit:test function reportTest:report-fix-simple-text()
         let $n := fn:normalize-space($o)
         where $n ne $o
         return map {
-          'item' : $item,
-          'old'  : $o,
-          'new'  : $n
+          $report:ITEM : $item,
+          $report:OLD  : $o,
+          $report:NEW  : $n
         }
       }
     },
@@ -89,9 +89,9 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
         let $pos := $item/pos
         where number($pos/text()) ne $i
         return map {
-          'item' : $item,
-          'old'  : $pos,
-          'new'  : $pos update (replace value of node . with $i)
+          $report:ITEM : $item,
+          $report:OLD  : $pos,
+          $report:NEW  : $pos update (replace value of node . with $i)
         }
       }
     },
@@ -127,9 +127,9 @@ declare %unit:test function reportTest:report-fix-nested-without-id()
         let $new := fn:normalize-space($item)
         where $new ne $item
         return map {
-          'item' : $item,
-          'old'  : $item,
-          'new'  : $new
+          $report:ITEM : $item,
+          $report:OLD  : $item,
+          $report:NEW  : $new
         }
       }
     },
@@ -162,9 +162,9 @@ declare %unit:before('apply-to-database') %updating function reportTest:apply-to
         let $n := fn:normalize-space($o)
         where $n ne $o
         return map {
-          'item' : $item,
-          'old'  : $o,
-          'new'  : $n
+          $report:ITEM : $item,
+          $report:OLD  : $o,
+          $report:NEW  : $n
         }
       }
     },
@@ -203,9 +203,9 @@ declare %unit:test function reportTest:report-delete-item()
         let $n := fn:normalize-space($o)
         where $n ne $o
         return map {
-          'item' : $item,
-          'old'  : $o,
-          'new'  : ()
+          $report:ITEM : $item,
+          $report:OLD  : $o,
+          $report:NEW  : ()
         }
       }
     },
@@ -241,9 +241,9 @@ declare %unit:test function reportTest:report-delete-item2()
         )
         where $fail
         return map {
-          'item' : $item,
-          'old'  : $item,
-          'new'  : ()
+          $report:ITEM : $item,
+          $report:OLD  : $item,
+          $report:NEW  : ()
         }
       }
     },
@@ -278,9 +278,9 @@ declare %unit:test function reportTest:report-delete-replace()
         )
         where $fail
         return map {
-          'item' : $item,
-          'old'  : $item,
-          'new'  : <entry myId="idXX">default</entry>
+          $report:ITEM : $item,
+          $report:OLD  : $item,
+          $report:NEW  : <entry myId="idXX">default</entry>
         }
       }
     },
@@ -309,11 +309,11 @@ declare %private function reportTest:create-options(
   as map(*)
 {
   map {
-    'items-selector' : $items,
-    'id-selector'    : $id,
-    'test-id'        : $test('id'),
-    'test'           : $test('do'),
-    'recommend'      : $recommend,
-    'cache'          : $cache
+    $report:ITEMS : $items,
+    $report:ITEMID    : $id,
+    $report:TESTID        : $test('id'),
+    $report:TEST           : $test('do'),
+    $report:RECOMMEND      : $recommend,
+    $report:CACHE          : $cache
   }
 };
