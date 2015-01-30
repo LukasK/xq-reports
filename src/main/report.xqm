@@ -10,7 +10,6 @@ TODO
 * README examples
 * make it possible to insert items (w/o old one ...)
 * check test function return types
-* remove reportTest options wrapper code
 
 * make optional parameters:
   * CACHE
