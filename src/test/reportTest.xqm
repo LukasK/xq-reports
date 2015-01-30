@@ -311,7 +311,8 @@ declare %private function reportTest:create-options(
   map {
     'items-selector' : $items,
     'id-selector'    : $id,
-    'test'           : $test,
+    'test-id'        : $test('id'),
+    'test'           : $test('do'),
     'recommend'      : $recommend,
     'cache'          : $cache
   }

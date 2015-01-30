@@ -7,7 +7,7 @@ declare default function namespace 'report';
 
 (:
 TODO
-* README
+* README examples
 * make it possible to insert items (w/o old one ...)
 
 
@@ -35,13 +35,12 @@ declare function as-xml($rootContext as node(), $options as map(*))
   
   (: OPTIONS :)
   let $recommend    := $options('recommend') and fn:not(fn:empty($options('recommend')))
-  let $test         := $options('test')
   let $idSelectorF  := $options('id-selector')
   let $noIdSelector := fn:empty($idSelectorF)
   let $items        := $options('items-selector')($rootContext)
   let $cache        := $options('cache')
-  let $testId       := $test('id')
-  let $testF        := $test('do')
+  let $testId       := $options('test-id')
+  let $testF        := $options('test')
   
   let $items := if($noIdSelector) then $items else $items ! (. update ())
   let $reported-items := $testF($items, $cache) ! element item {

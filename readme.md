@@ -37,22 +37,21 @@ report:as-xml(
   (: options map :)
   map {
     'items-selector' : function($context) { $context//text() },
-    'test'           : map {
-      'id': 'test1',
-      'do': function($texts, $cache) {
-        for $old in $texts
-        let $new := fn:normalize-space($old)
-        where $new ne $old
-        return map {
-          'item' : $old,
-          'old'  : $old,
-          'new'  : $new
-        }
+    'test-id'        : 'test1',
+    'test'           : function($texts, $cache) {
+      for $old in $texts
+      let $new := fn:normalize-space($old)
+      where $new ne $old
+      return map {
+        'item' : $old,
+        'old'  : $old,
+        'new'  : $new
       }
     },
     'recommend': fn:true()
   }
 )
+
 ```
 
 Result:
