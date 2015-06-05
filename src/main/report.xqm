@@ -41,7 +41,7 @@ declare variable $report:INFO       := 'info';
 
 declare function as-xml($rootContext as node(), $options as map(*))
 {
-  let $ok := check-options($options)
+  let $ok := check-options($options, fn:false())
   let $timestamp := timestamp()
   
   (: OPTIONS :)
@@ -94,7 +94,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
 declare %updating function apply($report as element(report), $rootContext as node(),
   $options as map(*))
 {
-  let $ok := check-options($options) and validate($report)
+  let $ok := check-options($options, fn:true()) and validate($report)
   let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
   let $reported-items := $report/item
   for $item in $options($report:ITEMS)($rootContext)
@@ -144,17 +144,17 @@ declare function validate($report as element(report)) as xs:boolean
   return if($v) then error($v) else fn:true()
 };
 
-declare function check-options($o as map(*)) as xs:boolean
+declare function check-options($o as map(*), $applyReport as xs:boolean) as xs:boolean
 {
   let $e := function($k) {
     error('type of option invalid: ' || $k)
   }
-  return if(fn:not($o($report:ITEMS)      instance of function(node()) as node()*)) then  $e('ITEM')
-    else if(fn:not($o($report:ITEMID)     instance of (function(node()) as xs:string)?)) then $e('ITEMID')
-    else if(fn:not($o($report:TEST)       instance of function(node()*, map(*)) as map(*)*)) then $e('TEST')
-    else if(fn:not($o($report:TESTID)     instance of xs:string)) then $e('TESTID')
-    else if(fn:not($o($report:RECOMMEND)  instance of xs:boolean)) then $e('RECOMMEND')
-    else if(fn:not($o($report:CACHE)      instance of map(*)?)) then $e('CACHE')
+  return if(fn:not($o($report:ITEMS)                               instance of function(node()) as node()*)) then  $e('ITEM')
+    else if(fn:not($o($report:ITEMID)                              instance of (function(node()) as xs:string)?)) then $e('ITEMID')
+    else if(fn:not($applyReport) and fn:not($o($report:TEST)       instance of function(node()*, map(*)) as map(*)*)) then $e('TEST')
+    else if(fn:not($applyReport) and fn:not($o($report:TESTID)     instance of xs:string)) then $e('TESTID')
+    else if(fn:not($applyReport) and fn:not($o($report:RECOMMEND)  instance of xs:boolean)) then $e('RECOMMEND')
+    else if(fn:not($applyReport) and fn:not($o($report:CACHE)      instance of map(*)?)) then $e('CACHE')
     else fn:true()
 };
 
