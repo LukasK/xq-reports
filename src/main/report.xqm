@@ -75,7 +75,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
       },
       element old       { $old },
       element new       { $new }[$recommend],
-      element info      { $info }[$info]
+      element info      { $info }[fn:not(fn:empty($info))]
     )
   }
   
