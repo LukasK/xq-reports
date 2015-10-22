@@ -7,15 +7,14 @@ declare default function namespace 'report';
 
 (:
 TODO
-* README examples
+* README - examples, options
+* remove RECOMMEND parameter - check with `map:keys($map) eq 'new'` instead
 * check test function return types
-
-* make optional parameters:
+* make parameters optional:
   * CACHE
   * ID-SELECTOR
-  * RECOMMEND
 * unit tests
-  * no recommend / recommend=true/false / missing <new/>
+  * no recommend / recommend=true/false / missing <new/> and recommend=true
   * report schema
   * cache
   * expected fails
@@ -45,7 +44,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
   let $timestamp := timestamp()
   
   (: OPTIONS :)
-  let $recommend    := $options($report:RECOMMEND) and fn:not(fn:empty($options($report:RECOMMEND)))
+  let $recommend    := $options($report:RECOMMEND) and fn:exists($options($report:RECOMMEND))
   let $idSelectorF  := $options($report:ITEMID)
   let $noIdSelector := fn:empty($idSelectorF)
   let $items        := $options($report:ITEMS)($rootContext)
@@ -75,7 +74,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
       },
       element old       { $old },
       element new       { $new }[$recommend],
-      element info      { $info }[fn:not(fn:empty($info))]
+      element info      { $info }[fn:exists($info)]
     )
   }
   
