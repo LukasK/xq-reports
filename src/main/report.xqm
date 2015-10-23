@@ -15,13 +15,13 @@ TODO
   * expected fails
   * replacing / deleting the root
   * replacing with sequence of text nodes
+  * namespaces
 * code TODOs
 * add version number + license
 * naming ok?
 * documentation
 * think about better integration: voktool + general
 * snake case variables etc.
-* contexts with namespaces? research! check xpath-location() function
 :)
 
 declare variable $report:ERROR  := xs:QName("XQREPORT");
@@ -40,21 +40,21 @@ declare variable $report:NEW        := 'new';
 declare variable $report:INFO       := 'info';
 
 
-declare function as-xml($rootContext as node(), $options as map(*))
+declare function as-xml($root-context as node(), $options as map(*))
 {
   let $ok := check-options($options, fn:false())
   let $timestamp := fn:current-dateTime()
   
   (: OPTIONS :)
-  let $idSelectorF  := $options($report:ITEMID)
-  let $noIdSelector := fn:empty($idSelectorF)
-  let $items        := $options($report:ITEMS)($rootContext)
-  let $cache        := $options($report:CACHE)
-  let $testId       := $options($report:TESTID)
-  let $testF        := $options($report:TEST)
+  let $id-selector-f := $options($report:ITEMID)
+  let $no-id-selector := fn:empty($id-selector-f)
+  let $items := $options($report:ITEMS)($root-context)
+  let $cache := $options($report:CACHE)
+  let $test-id := $options($report:TESTID)
+  let $test-f := $options($report:TEST)
   
-  let $items := if($noIdSelector) then $items else $items ! (. update ())
-  let $reported-items := $testF($items, $cache) ! element item {
+  let $items := if($no-id-selector) then $items else $items ! (. update ())
+  let $reported-items := $test-f($items, $cache) ! element item {
     let $new-key := map:keys(.) = $report:NEW
     let $item := .($report:ITEM)
     let $old  := .($report:OLD)
@@ -62,17 +62,17 @@ declare function as-xml($rootContext as node(), $options as map(*))
     let $info := .($report:INFO)
     return (
       attribute item-id {
-        if($noIdSelector) then
+        if($no-id-selector) then
           xpath-location($item)
         else
-          $idSelectorF($item)
+          $id-selector-f($item)
       },
       attribute xpath   {
-        let $oldLoc := xpath-location($old)
-        return if($noIdSelector) then
-          fn:replace($oldLoc, escape-location-path-pattern(xpath-location($item)), '')
+        let $old-loc := xpath-location($old)
+        return if($no-id-selector) then
+          fn:replace($old-loc, escape-location-path-pattern(xpath-location($item)), '')
         else
-          $oldLoc
+          $old-loc
       },
       element old       { $old },
       element new       { $new }[$new-key],
@@ -84,36 +84,36 @@ declare function as-xml($rootContext as node(), $options as map(*))
     attribute count { fn:count($reported-items) },
     attribute time { $timestamp },
     attribute id { new-id() },
-    attribute no-id-selector { $noIdSelector },
-    attribute test-id { $testId },
+    attribute no-id-selector { $no-id-selector },
+    attribute test-id { $test-id },
     $reported-items
   }
   
   return $report
 };
 
-declare %updating function apply($report as element(report), $rootContext as node(),
+declare %updating function apply($report as element(report), $root-context as node(),
   $options as map(*))
 {
   let $ok := check-options($options, fn:true()) and validate($report)
-  let $noIdSelector := xs:boolean($report/@no-id-selector) eq fn:true()
+  let $no-id-selector := xs:boolean($report/@no-id-selector) eq fn:true()
   let $reported-items := $report/item
-  for $item in $options($report:ITEMS)($rootContext)
-  let $itemId :=
-    if($noIdSelector) then
+  for $item in $options($report:ITEMS)($root-context)
+  let $item-id :=
+    if($no-id-selector) then
       xpath-location($item)
     else
       $options($report:ITEMID)($item)
-  let $reported-item := $reported-items[@item-id eq $itemId]
+  let $reported-item := $reported-items[@item-id eq $item-id]
   where $reported-item
   (: there might be several items on the descendant axis of an identical item :)
   return $reported-item ! apply-recommendation(., $item)
 };
 
-declare function apply-to-copy($report as element(report), $rootContext as node(),
+declare function apply-to-copy($report as element(report), $root-context as node(),
   $options as map(*)) as node()
 {
-  $rootContext update (apply($report, ., $options))
+  $root-context update (apply($report, ., $options))
 };
 
 
@@ -144,7 +144,7 @@ declare function validate($report as element(report)) as xs:boolean
   return if($v) then error($v) else fn:true()
 };
 
-declare function check-options($o as map(*), $applyReport as xs:boolean) as xs:boolean
+declare function check-options($o as map(*), $apply-report as xs:boolean) as xs:boolean
 {
   let $e := function($k) {
     error('Type of option invalid: ' || $k)
@@ -155,7 +155,7 @@ declare function check-options($o as map(*), $applyReport as xs:boolean) as xs:b
     else if(fn:not($o($report:TESTID)  instance of xs:string?)) then $e('TESTID')
     else if(fn:not($o($report:CACHE)   instance of map(*)?)) then $e('CACHE')
     else if(fn:not($o($report:TEST)    instance of function(node()*, map(*)?) as map(*)*)
-      and fn:not($applyReport)) then $e('TEST')
+      and fn:not($apply-report)) then $e('TEST')
     else fn:true()
 };
 
