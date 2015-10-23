@@ -15,13 +15,9 @@ TODO
   * expected fails
   * replacing / deleting the root
   * replacing with sequence of text nodes
-  * namespaces
-* code TODOs
 * add version number + license
 * naming ok?
 * documentation
-* think about better integration: voktool + general
-* snake case variables etc.
 :)
 
 declare variable $report:ERROR  := xs:QName("XQREPORT");
@@ -39,9 +35,17 @@ declare variable $report:OLD        := 'old';
 declare variable $report:NEW        := 'new';
 declare variable $report:INFO       := 'info';
 
-
-declare function as-xml($root-context as node(), $options as map(*))
-{
+(:~
+ : Creates an XML report.
+ :
+ : @param  $root-context Report context
+ : @param  $options Options map
+ : @return XML report
+ :)
+declare function as-xml(
+  $root-context as node(),
+  $options as map(*)
+) as element(report) {
   let $ok := check-options($options, fn:false())
   let $timestamp := fn:current-dateTime()
   
@@ -92,9 +96,18 @@ declare function as-xml($root-context as node(), $options as map(*))
   return $report
 };
 
-declare %updating function apply($report as element(report), $root-context as node(),
-  $options as map(*))
-{
+(:~
+ : Applies a report to the given context.
+ :
+ : @param  $report XML report to be applied
+ : @param  $root-context Report context
+ : @param  $options Options map
+ :)
+declare %updating function apply(
+  $report as element(report),
+  $root-context as node(),
+  $options as map(*)
+) {
   let $ok := check-options($options, fn:true()) and validate($report)
   let $no-id-selector := xs:boolean($report/@no-id-selector) eq fn:true()
   let $reported-items := $report/item
@@ -110,20 +123,33 @@ declare %updating function apply($report as element(report), $root-context as no
   return $reported-item ! apply-recommendation(., $item)
 };
 
-declare function apply-to-copy($report as element(report), $root-context as node(),
-  $options as map(*)) as node()
-{
+(:~
+ : Applies a report to a copy of the given context.
+ :
+ : @param  $report XML report to be applied
+ : @param  $root-context Report context
+ : @param  $options Options map
+ : @return Updated context copy
+ :)
+declare function apply-to-copy(
+  $report as element(report),
+  $root-context as node(),
+  $options as map(*)
+) as node() {
   $root-context update (apply($report, ., $options))
 };
 
-
-
-
 (: ********************************** private functions ***************************************** :)
+(:~
+ : Applies a recommendation, if the given item carries a <new> element.
+ :
+ : @param  $reported-item Report entry item
+ : @param  $item Item to be changed
+ :)
 declare %private %updating function apply-recommendation(
   $reported-item as element(item),
-  $item as node())
-{
+  $item as node()
+) {
   let $new := $reported-item/new
   where $new
   let $new  := $new/child::node()
@@ -138,14 +164,31 @@ declare %private %updating function apply-recommendation(
       replace node $target with $new
 };
 
-declare function validate($report as element(report)) as xs:boolean
-{
+(:~
+ : Valdiates a report element.
+ :
+ : @param  $report XML report
+ : @return True, if report ok.
+ :)
+declare function validate(
+  $report as element(report)
+) as xs:boolean {
   let $v := fn:string-join(validate:xsd-info($report, fn:doc($report:SCHEMA)), "&#xA;")
   return if($v) then error($v) else fn:true()
 };
 
-declare function check-options($o as map(*), $apply-report as xs:boolean) as xs:boolean
-{
+(:~
+ : Raises an error if content of options map is not correctly typed.
+ :
+ : @param  $o Options map
+ : @param  $apply-report Options map is to be used for report application, i.e. no test function
+                         needed then.
+ : @return True, if ok.
+ :)
+declare function check-options(
+  $o as map(*),
+  $apply-report as xs:boolean
+) as xs:boolean {
   let $e := function($k) {
     error('Type of option invalid: ' || $k)
   }
@@ -159,8 +202,14 @@ declare function check-options($o as map(*), $apply-report as xs:boolean) as xs:
     else fn:true()
 };
 
-declare function error($msg as xs:string)
-{
+(:~
+ : Raises an error with the given message.
+ :
+ : @param  $msg message
+ :)
+declare function error(
+  $msg as xs:string
+) {
   fn:error($report:ERROR, $msg)
 };
 
@@ -169,8 +218,8 @@ declare function error($msg as xs:string)
  :
  : @return random id string
  :)
-declare %private function new-id() as xs:string
-{
+declare %private function new-id(
+) as xs:string {
   random:uuid()
     ! fn:replace(., '-', '')
     ! xs:hexBinary(.)
@@ -180,13 +229,21 @@ declare %private function new-id() as xs:string
     ! fn:replace(., "[^A-Za-z0-9]", "_")
 };
 
-declare %private function xpath-location($n as node()) as xs:string
-{
+declare %private function xpath-location(
+  $n as node()
+) as xs:string {
   fn:replace(fn:path($n), 'Q\{.*?\}root\(\)', '')
 };
 
-declare %private function escape-location-path-pattern($s as xs:string) as xs:string
-{
+(:~
+ : Escapes characters in location path string.
+ :
+ : @param  $s location path string
+ : @return escaped location path string
+ :)
+declare %private function escape-location-path-pattern(
+  $s as xs:string
+) as xs:string {
   $s
     ! fn:replace(., '\[', '\\[')
     ! fn:replace(., '\]', '\\]')

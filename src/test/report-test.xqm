@@ -2,34 +2,23 @@
  : Report module tests.
  : @author Lukas Kircher, BaseX GmbH, 2012-14
  :)
-module namespace reportTest = 'reportTest';
+module namespace t = 't';
 import module namespace report = 'report';
 
-declare variable $reportTest:DB := $report:TEST;
-declare variable $reportTest:INPUT := file:base-dir() || '../../etc/data/test.xml';
+declare variable $t:DB := $report:TEST;
+declare variable $t:INPUT := file:base-dir() || '../../etc/data/test.xml';
 
-declare %unit:before %updating function reportTest:prep()
+declare %unit:before %updating function t:prep()
 {
-  db:create($reportTest:DB, $reportTest:INPUT)
+  db:create($t:DB, $t:INPUT)
 };
 
-declare %unit:after-module %updating function reportTest:clean()
+declare %unit:after-module %updating function t:clean()
 {
-  db:drop($reportTest:DB)
+  db:drop($t:DB)
 };
 
-(:declare %unit:test('expected', 'XQREPORT') function reportTest:report-schema-error1()
-{
-  report:validate(
-    <report count="1" time="2015-01-28T15:02:07.342Z" id="3SgsPhTIQHuM_hcg7_rEXw" no-id-selector="true">
-      <item item-id="/n[1]/text()[1]" xpath="" test-id="test1">
-        <old><one/>two</old>
-      </item>
-    </report>
-  )
-};:)
-
-declare %unit:test function reportTest:report-fix-simple-text()
+declare %unit:test function t:report-fix-simple-text()
 {
   let $doc :=
     <items>
@@ -62,7 +51,7 @@ declare %unit:test function reportTest:report-fix-simple-text()
   )
 };
 
-declare %unit:test function reportTest:report-fix-global-element-ordering()
+declare %unit:test function t:report-fix-global-element-ordering()
 {
   let $doc :=
     <items>
@@ -97,7 +86,7 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
   )
 };
 
-declare %unit:test function reportTest:report-fix-nested-without-id()
+declare %unit:test function t:report-fix-nested-without-id()
 {
   let $doc :=
     <items>
@@ -128,9 +117,9 @@ declare %unit:test function reportTest:report-fix-nested-without-id()
   )
 };
 
-declare %unit:before('apply-to-database') %updating function reportTest:apply-to-database-update()
+declare %unit:before('apply-to-database') %updating function t:apply-to-database-update()
 {
-  let $doc := db:open($reportTest:DB)//apply-to-database-update/items
+  let $doc := db:open($t:DB)//apply-to-database-update/items
   let $options := map {
     $report:ITEMS:   function($items as node()) as node()* { $items//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
@@ -150,9 +139,9 @@ declare %unit:before('apply-to-database') %updating function reportTest:apply-to
   let $report := report:as-xml($doc, $options)
   return report:apply($report, $doc, $options)
 };
-declare %unit:test function reportTest:apply-to-database-test()
+declare %unit:test function t:apply-to-database-test()
 {
-  let $cleaned := db:open($reportTest:DB)//apply-to-database-update/items
+  let $cleaned := db:open($t:DB)//apply-to-database-update/items
   return unit:assert-equals($cleaned,
     <items>
       <entry myId="id1">text1.1<sth/>text1.2</entry>
@@ -161,7 +150,7 @@ declare %unit:test function reportTest:apply-to-database-test()
   )
 };
 
-declare %unit:test function reportTest:report-delete-item()
+declare %unit:test function t:report-delete-item()
 {
   let $doc :=
     <items>
@@ -194,7 +183,7 @@ declare %unit:test function reportTest:report-delete-item()
   )
 };
 
-declare %unit:test function reportTest:report-delete-item2()
+declare %unit:test function t:report-delete-item2()
 {
   let $doc :=
     <items>
@@ -227,7 +216,7 @@ declare %unit:test function reportTest:report-delete-item2()
   )
 };
 
-declare %unit:test function reportTest:report-delete-replace()
+declare %unit:test function t:report-delete-replace()
 {
   let $doc :=
     <items>
@@ -261,7 +250,7 @@ declare %unit:test function reportTest:report-delete-replace()
   )
 };
 
-declare %unit:test function reportTest:report-no-new-key()
+declare %unit:test function t:report-no-new-key()
 {
   let $doc :=
     <items>
@@ -281,4 +270,41 @@ declare %unit:test function reportTest:report-no-new-key()
   }
   let $report := report:as-xml($doc, $options)
   return unit:assert(fn:empty($report/item/new))
+};
+
+declare %unit:test function t:namespaces-no-item-id()
+{
+  let $doc :=
+    <items>
+      <entry myId="id0">
+        <data><BEFORE/></data>
+      </entry>
+      <entry xmlns="ns" myId="id1">
+        <data xmlns="ns2"><BEFORE xmlns="ns3"/><BEFORE/></data>
+      </entry>
+      <entry xmlns="ns" myId="id3">
+        <data xmlns="ns3"><BEFORE/></data>
+      </entry>
+      <entry myId="id2"><BEFORE/></entry>
+    </items>
+  let $options := map {
+    $report:ITEMS:   function($items as node()) as node()* { $items//*:entry },
+    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $report:TEST:
+      function($items as node()*, $cache as map(*)?) as map(*)* {
+        for $item in $items
+        for $o in $item//*:BEFORE
+        return map {
+          $report:ITEM : $item,
+          $report:OLD  : $o,
+          $report:NEW  : <AFTER/>
+        }
+      }
+  }
+  let $report := report:as-xml($doc, $options)
+  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  return (
+    unit:assert-equals(fn:count($cleaned//*:BEFORE), 0),
+    unit:assert-equals(fn:count($cleaned//*:AFTER), 5)
+  )
 };
