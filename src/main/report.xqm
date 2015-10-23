@@ -119,8 +119,7 @@ declare function apply-to-copy($report as element(report), $rootContext as node(
 
 
 
-(: ********************** utilities *********************:)
-
+(: ********************************** private functions ***************************************** :)
 declare %private %updating function apply-recommendation(
   $reported-item as element(item),
   $item as node())
@@ -129,7 +128,7 @@ declare %private %updating function apply-recommendation(
   where $new
   let $new  := $new/child::node()
   let $old := $reported-item/old/child::node()
-  let $target := evaluate-xpath($item, $reported-item/@xpath)
+  let $target := xquery:eval("." || $reported-item/@xpath, map { '': $item })
   return
     (: safety measure - throw error in case original already changed :)
     if(fn:not(fn:deep-equal($old, $target))) then
@@ -165,45 +164,6 @@ declare function error($msg as xs:string)
   fn:error($report:ERROR, $msg)
 };
 
-declare %private function evaluate-xpath(
-  $n    as node(),
-  $path as xs:string
-) as node()
-{
-  if(fn:string-length($path) eq 0) then
-    $n
-  else if(fn:not(fn:matches($path, "^/"))) then
-    error("Path must start with a slash: " || $path)
-  else
-    steps($n, fn:tail(fn:tokenize($path, "/")))
-};
-
-declare %private function steps(
-  $n     as element(),
-  $steps as xs:string*
-) as node()
-{
-  (: next child step :)
-  let $ch  := fn:head($steps)
-  (: get positional predicate :)
-  let $a   := fn:analyze-string($ch, "\[\d+\]")
-  let $pos := fn:replace($a/fn:match, "\[|\]", "")
-  (: child position :)
-  let $pos := fn:number(if(fn:string-length($pos) eq 0) then 1 else $pos)
-  (: child element name :)
-  let $ch  := $a/fn:non-match/fn:string()
-  (: descendant steps :)
-  let $dc  := fn:tail($steps)
-  (: evaluate child with given name and position :)
-  let $ch  :=
-    if($ch eq 'text()') then
-      $n/text()[$pos]
-    else
-      $n/*[fn:name(.) eq $ch][$pos]
-  return
-    if(fn:empty($dc) or $ch instance of text()) then $ch else steps($ch, $dc)
-};
-
 (:~
  : Generates a random id consisting of digits [0-9] and letters [A-Z][a-z].
  :
@@ -222,7 +182,7 @@ declare %private function new-id() as xs:string
 
 declare %private function xpath-location($n as node()) as xs:string
 {
-  fn:replace(fn:path($n), 'root\(\)|Q\{.*?\}', '')
+  fn:replace(fn:path($n), 'Q\{.*?\}root\(\)', '')
 };
 
 declare %private function escape-location-path-pattern($s as xs:string) as xs:string
@@ -232,4 +192,6 @@ declare %private function escape-location-path-pattern($s as xs:string) as xs:st
     ! fn:replace(., '\]', '\\]')
     ! fn:replace(., '\(', '\\(')
     ! fn:replace(., '\)', '\\)')
+    ! fn:replace(., '\{', '\\{')
+    ! fn:replace(., '\}', '\\}')
 };
