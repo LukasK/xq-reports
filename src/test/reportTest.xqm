@@ -39,9 +39,8 @@ declare %unit:test function reportTest:report-fix-simple-text()
   let $options := map {
     $report:ITEMS:   function($items as node()) as node()* { $items//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TESTID:  'test-id-normalize-ws',
     $report:TEST:
-      function($items as node()*, $cache as map(*)) as map(*)* {
+      function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         for $o in $item/text()
         let $n := fn:normalize-space($o)
@@ -51,8 +50,7 @@ declare %unit:test function reportTest:report-fix-simple-text()
           $report:OLD  : $o,
           $report:NEW  : $n
         }
-      },
-    $report:CACHE    : map {}
+      }
   }
   let $report := report:as-xml($doc, $options)
   let $cleaned := report:apply-to-copy($report, $doc, $options)
@@ -75,9 +73,8 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
   let $options := map {
     $report:ITEMS:   function($items as node()) as node()* { $items/entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TESTID:  'test-id-global-order',
     $report:TEST:
-      function($items as node()*, $cache as map(*)) as map(*)* {
+      function($items as node()*, $cache as map(*)?) as map(*)* {
         let $items := for $i in $items order by number($i/pos/text()) return $i
         for $item at $i in $items
         let $pos := $item/pos
@@ -87,8 +84,7 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
           $report:OLD  : $pos,
           $report:NEW  : $pos update (replace value of node . with $i)
         }
-      },
-    $report:CACHE    : map {}
+      }
   }
   let $report := report:as-xml($doc, $options)
   let $cleaned := report:apply-to-copy($report, $doc, $options)
@@ -111,9 +107,8 @@ declare %unit:test function reportTest:report-fix-nested-without-id()
     </items>
   let $options := map {
     $report:ITEMS:   function($items as node()) as node()* { $items//text() },
-    $report:TESTID:  'test-id-nested-without-id',
     $report:TEST:
-      function($items as node()*, $cache as map(*)) as map(*)* {
+      function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         let $new := fn:normalize-space($item)
         where $new ne $item
@@ -122,8 +117,7 @@ declare %unit:test function reportTest:report-fix-nested-without-id()
           $report:OLD  : $item,
           $report:NEW  : $new
         }
-      },
-    $report:CACHE    : map {}
+      }
   }
   let $report := report:as-xml($doc, $options)
   let $cleaned := report:apply-to-copy($report, $doc, $options)
@@ -140,9 +134,8 @@ declare %unit:before('apply-to-database') %updating function reportTest:apply-to
   let $options := map {
     $report:ITEMS:   function($items as node()) as node()* { $items//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TESTID:  'test-id-normalize-ws',
     $report:TEST:
-      function($items as node()*, $cache as map(*)) as map(*)* {
+      function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         for $o in $item/text()
         let $n := fn:normalize-space($o)
@@ -152,8 +145,7 @@ declare %unit:before('apply-to-database') %updating function reportTest:apply-to
           $report:OLD  : $o,
           $report:NEW  : $n
         }
-      },
-    $report:CACHE    : map {}
+      }
   }
   let $report := report:as-xml($doc, $options)
   return report:apply($report, $doc, $options)
@@ -179,9 +171,8 @@ declare %unit:test function reportTest:report-delete-item()
   let $options := map {
     $report:ITEMS:   function($items as node()) as node()* { $items//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TESTID:  'test-id-delete',
     $report:TEST:
-      function($items as node()*, $cache as map(*)) as map(*)* {
+      function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         for $o in $item/text()
         let $n := fn:normalize-space($o)
@@ -191,8 +182,7 @@ declare %unit:test function reportTest:report-delete-item()
           $report:OLD  : $o,
           $report:NEW  : ()
         }
-      },
-    $report:CACHE    : map {}
+      }
   }
   let $report := report:as-xml($doc, $options)
   let $cleaned := report:apply-to-copy($report, $doc, $options)
@@ -214,9 +204,8 @@ declare %unit:test function reportTest:report-delete-item2()
   let $options := map {
     $report:ITEMS:   function($items as node()) as node()* { $items//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TESTID:  'test-id-delete',
     $report:TEST:
-      function($items as node()*, $cache as map(*)) as map(*)* {
+      function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         let $fail := fn:not(
           every $t in $item/text() satisfies $t eq fn:normalize-space($t)
@@ -227,8 +216,7 @@ declare %unit:test function reportTest:report-delete-item2()
           $report:OLD  : $item,
           $report:NEW  : ()
         }
-      },
-    $report:CACHE    : map {}
+      }
   }
   let $report := report:as-xml($doc, $options)
   let $cleaned := report:apply-to-copy($report, $doc, $options)
@@ -249,9 +237,8 @@ declare %unit:test function reportTest:report-delete-replace()
   let $options := map {
     $report:ITEMS:   function($items as node()) as node()* { $items//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TESTID:  'test-id-delete',
     $report:TEST:
-      function($items as node()*, $cache as map(*)) as map(*)* {
+      function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         let $fail := fn:not(
           every $t in $item/text() satisfies $t eq fn:normalize-space($t)
@@ -262,8 +249,7 @@ declare %unit:test function reportTest:report-delete-replace()
           $report:OLD  : $item,
           $report:NEW  : <entry myId="idXX">default</entry>
         }
-      },
-    $report:CACHE    : map {}
+      }
   }
   let $report := report:as-xml($doc, $options)
   let $cleaned := report:apply-to-copy($report, $doc, $options)
@@ -284,17 +270,15 @@ declare %unit:test function reportTest:report-no-new-key()
   let $options := map {
     $report:ITEMS:   function($items as node()) as node()* { $items//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TESTID:  'test-id-delete',
     $report:TEST:
-      function($items as node()*, $cache as map(*)) as map(*)* {
+      function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         return map {
           $report:ITEM : $item,
           $report:OLD  : $item
         }
-      },
-    $report:CACHE    : map {}
+      }
   }
-  let $report := fn:trace(report:as-xml($doc, $options), '$var@TRACE  ')
+  let $report := report:as-xml($doc, $options)
   return unit:assert(fn:empty($report/item/new))
 };

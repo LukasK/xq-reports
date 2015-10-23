@@ -8,23 +8,22 @@ declare default function namespace 'report';
 (:
 TODO
 * README - examples, options
-* check test function return types
-* make parameters optional:
-  * CACHE
-  * ID-SELECTOR
 * unit tests
   * <old><foo/></old><new>text</new>?
   * report schema
-  * cache
+  * cache use
   * expected fails
+  * replacing / deleting the root
+  * replacing with sequence of text nodes
 * code TODOs
 * add version number + license
 * naming ok?
 * documentation
 * think about better integration: voktool + general
 * timestamp() makes sense?
-* simplify new-id()
 * snake case variables etc.
+* error messages
+* contexts with namespaces? research! check xpath-location() function
 :)
 
 declare variable $report:ERROR  := xs:QName("XQREPORT");
@@ -151,13 +150,15 @@ declare function validate($report as element(report)) as xs:boolean
 declare function check-options($o as map(*), $applyReport as xs:boolean) as xs:boolean
 {
   let $e := function($k) {
-    error('type of option invalid: ' || $k)
+    error('Type of option invalid: ' || $k)
   }
-  return if(fn:not($o($report:ITEMS)                               instance of function(node()) as node()*)) then  $e('ITEM')
-    else if(fn:not($o($report:ITEMID)                              instance of (function(node()) as xs:string)?)) then $e('ITEMID')
-    else if(fn:not($applyReport) and fn:not($o($report:TEST)       instance of function(node()*, map(*)) as map(*)*)) then $e('TEST')
-    else if(fn:not($applyReport) and fn:not($o($report:TESTID)     instance of xs:string)) then $e('TESTID')
-    else if(fn:not($applyReport) and fn:not($o($report:CACHE)      instance of map(*)?)) then $e('CACHE')
+  return if(fn:not($o($report:ITEMS)   instance of function(node()) as node()*)) then  $e('ITEM')
+    else if(fn:not($o($report:ITEMID)  instance of (function(node()) as xs:string)?))
+      then $e('ITEMID')
+    else if(fn:not($o($report:TESTID)  instance of xs:string?)) then $e('TESTID')
+    else if(fn:not($o($report:CACHE)   instance of map(*)?)) then $e('CACHE')
+    else if(fn:not($o($report:TEST)    instance of function(node()*, map(*)?) as map(*)*)
+      and fn:not($applyReport)) then $e('TEST')
     else fn:true()
 };
 
@@ -209,6 +210,11 @@ declare %private function timestamp() as xs:dateTime {
   fn:adjust-dateTime-to-timezone(fn:current-dateTime(), xs:dayTimeDuration('PT0H'))
 };
 
+(:~
+ : Generates a random id consisting of digits [0-9] and letters [A-Z][a-z].
+ :
+ : @return random id string
+ :)
 declare %private function new-id() as xs:string
 {
   random:uuid()
