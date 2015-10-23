@@ -1,6 +1,9 @@
 (:~
  : Report module.
- : @author Lukas Kircher, BaseX GmbH, 2012-15
+ :
+ : @author Lukas Kircher, BaseX GmbH, 2015
+ : @version 0.1
+ : @license BSD 2-Clause License
  :)
 module namespace report = 'report';
 declare default function namespace 'report';
@@ -15,8 +18,6 @@ TODO
   * expected fails
   * replacing / deleting the root
   * replacing with sequence of text nodes
-* add version number + license
-* naming ok?
 * documentation
 :)
 

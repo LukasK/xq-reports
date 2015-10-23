@@ -1,6 +1,9 @@
 (:~
  : Report module tests.
- : @author Lukas Kircher, BaseX GmbH, 2012-14
+ :
+ : @author Lukas Kircher, BaseX GmbH, 2015
+ : @version 0.1
+ : @license BSD 2-Clause License
  :)
 module namespace t = 't';
 import module namespace report = 'report';
@@ -112,7 +115,8 @@ declare %unit:test function t:report-fix-nested-without-id()
   let $cleaned := report:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned,
     <items>
-      <n>text1<n>text2<n/>text3</n></n>text4<n>text5<n>text6<n>text7<n><n/>text8</n></n><n/>text9</n></n>
+      <n>text1<n>text2<n/>text3</n></n>text4<n>text5<n>text6<n>text7<n><n/>text8</n></n>
+      <n/>text9</n></n>
     </items>
   )
 };
