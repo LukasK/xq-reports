@@ -52,7 +52,6 @@ declare %unit:test function reportTest:report-fix-simple-text()
           $report:NEW  : $n
         }
       },
-    $report:RECOMMEND: fn:true(),
     $report:CACHE    : map {}
   }
   let $report := report:as-xml($doc, $options)
@@ -89,7 +88,6 @@ declare %unit:test function reportTest:report-fix-global-element-ordering()
           $report:NEW  : $pos update (replace value of node . with $i)
         }
       },
-    $report:RECOMMEND: fn:true(),
     $report:CACHE    : map {}
   }
   let $report := report:as-xml($doc, $options)
@@ -125,7 +123,6 @@ declare %unit:test function reportTest:report-fix-nested-without-id()
           $report:NEW  : $new
         }
       },
-    $report:RECOMMEND: fn:true(),
     $report:CACHE    : map {}
   }
   let $report := report:as-xml($doc, $options)
@@ -156,7 +153,6 @@ declare %unit:before('apply-to-database') %updating function reportTest:apply-to
           $report:NEW  : $n
         }
       },
-    $report:RECOMMEND: fn:true(),
     $report:CACHE    : map {}
   }
   let $report := report:as-xml($doc, $options)
@@ -196,7 +192,6 @@ declare %unit:test function reportTest:report-delete-item()
           $report:NEW  : ()
         }
       },
-    $report:RECOMMEND: fn:true(),
     $report:CACHE    : map {}
   }
   let $report := report:as-xml($doc, $options)
@@ -233,7 +228,6 @@ declare %unit:test function reportTest:report-delete-item2()
           $report:NEW  : ()
         }
       },
-    $report:RECOMMEND: fn:true(),
     $report:CACHE    : map {}
   }
   let $report := report:as-xml($doc, $options)
@@ -269,7 +263,6 @@ declare %unit:test function reportTest:report-delete-replace()
           $report:NEW  : <entry myId="idXX">default</entry>
         }
       },
-    $report:RECOMMEND: fn:true(),
     $report:CACHE    : map {}
   }
   let $report := report:as-xml($doc, $options)
@@ -280,4 +273,28 @@ declare %unit:test function reportTest:report-delete-replace()
       <entry myId="id2">text2</entry>
     </items>
   )
+};
+
+declare %unit:test function reportTest:report-no-new-key()
+{
+  let $doc :=
+    <items>
+      <entry myId="id1">text</entry>
+    </items>
+  let $options := map {
+    $report:ITEMS:   function($items as node()) as node()* { $items//entry },
+    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $report:TESTID:  'test-id-delete',
+    $report:TEST:
+      function($items as node()*, $cache as map(*)) as map(*)* {
+        for $item in $items
+        return map {
+          $report:ITEM : $item,
+          $report:OLD  : $item
+        }
+      },
+    $report:CACHE    : map {}
+  }
+  let $report := fn:trace(report:as-xml($doc, $options), '$var@TRACE  ')
+  return unit:assert(fn:empty($report/item/new))
 };

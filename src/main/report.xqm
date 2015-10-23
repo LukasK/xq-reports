@@ -8,17 +8,23 @@ declare default function namespace 'report';
 (:
 TODO
 * README - examples, options
-* remove RECOMMEND parameter - check with `map:keys($map) eq 'new'` instead
 * check test function return types
 * make parameters optional:
   * CACHE
   * ID-SELECTOR
 * unit tests
-  * no recommend / recommend=true/false / missing <new/> and recommend=true
+  * <old><foo/></old><new>text</new>?
   * report schema
   * cache
   * expected fails
 * code TODOs
+* add version number + license
+* naming ok?
+* documentation
+* think about better integration: voktool + general
+* timestamp() makes sense?
+* simplify new-id()
+* snake case variables etc.
 :)
 
 declare variable $report:ERROR  := xs:QName("XQREPORT");
@@ -29,7 +35,6 @@ declare variable $report:ITEMS      := 'items-selector';
 declare variable $report:ITEMID     := 'id-selector';
 declare variable $report:TEST       := 'test';
 declare variable $report:TESTID     := 'test-id';
-declare variable $report:RECOMMEND  := 'recommend';
 declare variable $report:CACHE      := 'cache';
 (: test result keys :)
 declare variable $report:ITEM       := 'item';
@@ -44,7 +49,6 @@ declare function as-xml($rootContext as node(), $options as map(*))
   let $timestamp := timestamp()
   
   (: OPTIONS :)
-  let $recommend    := $options($report:RECOMMEND) and fn:exists($options($report:RECOMMEND))
   let $idSelectorF  := $options($report:ITEMID)
   let $noIdSelector := fn:empty($idSelectorF)
   let $items        := $options($report:ITEMS)($rootContext)
@@ -54,6 +58,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
   
   let $items := if($noIdSelector) then $items else $items ! (. update ())
   let $reported-items := $testF($items, $cache) ! element item {
+    let $new-key := map:keys(.) = $report:NEW
     let $item := .($report:ITEM)
     let $old  := .($report:OLD)
     let $new  := .($report:NEW)
@@ -73,7 +78,7 @@ declare function as-xml($rootContext as node(), $options as map(*))
           $oldLoc
       },
       element old       { $old },
-      element new       { $new }[$recommend],
+      element new       { $new }[$new-key],
       element info      { $info }[fn:exists($info)]
     )
   }
@@ -152,7 +157,6 @@ declare function check-options($o as map(*), $applyReport as xs:boolean) as xs:b
     else if(fn:not($o($report:ITEMID)                              instance of (function(node()) as xs:string)?)) then $e('ITEMID')
     else if(fn:not($applyReport) and fn:not($o($report:TEST)       instance of function(node()*, map(*)) as map(*)*)) then $e('TEST')
     else if(fn:not($applyReport) and fn:not($o($report:TESTID)     instance of xs:string)) then $e('TESTID')
-    else if(fn:not($applyReport) and fn:not($o($report:RECOMMEND)  instance of xs:boolean)) then $e('RECOMMEND')
     else if(fn:not($applyReport) and fn:not($o($report:CACHE)      instance of map(*)?)) then $e('CACHE')
     else fn:true()
 };
