@@ -20,9 +20,7 @@ TODO
 * naming ok?
 * documentation
 * think about better integration: voktool + general
-* timestamp() makes sense?
 * snake case variables etc.
-* error messages
 * contexts with namespaces? research! check xpath-location() function
 :)
 
@@ -45,7 +43,7 @@ declare variable $report:INFO       := 'info';
 declare function as-xml($rootContext as node(), $options as map(*))
 {
   let $ok := check-options($options, fn:false())
-  let $timestamp := timestamp()
+  let $timestamp := fn:current-dateTime()
   
   (: OPTIONS :)
   let $idSelectorF  := $options($report:ITEMID)
@@ -204,10 +202,6 @@ declare %private function steps(
       $n/*[fn:name(.) eq $ch][$pos]
   return
     if(fn:empty($dc) or $ch instance of text()) then $ch else steps($ch, $dc)
-};
-
-declare %private function timestamp() as xs:dateTime {
-  fn:adjust-dateTime-to-timezone(fn:current-dateTime(), xs:dayTimeDuration('PT0H'))
 };
 
 (:~
