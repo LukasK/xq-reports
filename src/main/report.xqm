@@ -10,9 +10,9 @@ declare default function namespace 'report';
 
 (:
 TODO
-* TEST func: rename $items to $ctx
 * move @xpath to 'old' element
-* check empty: xpath, item-id, ... validation?
+* apply(): use map for speedup?
+* check empty in report: xpath, item-id, ... validation?
 * README - examples, options
 * unit tests
   * expected fails
@@ -189,7 +189,8 @@ declare function check-options(
   let $e := function($k) {
     error('Type of option invalid: ' || $k)
   }
-  return if(fn:not($o($report:ITEMS)   instance of function(node()) as node()*)) then  $e('ITEM')
+  return
+         if(fn:not($o($report:ITEMS)   instance of function(node()) as node()*)) then  $e('ITEM')
     else if(fn:not($o($report:ITEMID)  instance of (function(node()) as xs:string)?))
       then $e('ITEMID')
     else if(fn:not($o($report:TESTID)  instance of xs:string?)) then $e('TESTID')

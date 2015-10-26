@@ -48,7 +48,7 @@ declare %unit:test function t:fix-simple-text()
       <entry myId="id2">text2</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items//entry },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
@@ -82,7 +82,7 @@ declare %unit:test function t:fix-global-element-ordering()
       <entry myId="id2"><pos>6</pos></entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items/entry },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx/entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
@@ -117,7 +117,7 @@ declare %unit:test function t:clean-nested-texts-without-id()
       <n> text5<n> text6<n> text7<n><n/> text8 </n></n><n/> text9 </n></n>
     </items>
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items//text() },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//text() },
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
@@ -144,7 +144,7 @@ declare %unit:before('apply-to-database') %updating function t:apply-to-database
 {
   let $doc := db:open($t:DB)//apply-to-database-update/items
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items//entry },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
@@ -181,7 +181,7 @@ declare %unit:test function t:delete-item-1()
       <entry myId="id2">text2</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items//entry },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
@@ -214,7 +214,7 @@ declare %unit:test function t:delete-item-2()
       <entry myId="id2">text2</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items//entry },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
@@ -247,7 +247,7 @@ declare %unit:test function t:replace-entry()
       <entry myId="id2">text2</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items//entry },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
@@ -277,7 +277,7 @@ declare %unit:test function t:test-result-without-new()
       <entry myId="id1">text</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items//entry },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
@@ -308,7 +308,7 @@ declare %unit:test function t:context-with-namespaces()
       <entry myId="id2"><BEFORE/></entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items//*:entry },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//*:entry },
     $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
@@ -336,7 +336,7 @@ declare %unit:test function t:access-cache()
       <entry myId="id0">text</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($items as node()) as node()* { $items//entry },
+    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
     $report:TEST:
       function($item as node()*, $cache as map(*)?) as map(*)* {
         map {
