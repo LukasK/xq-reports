@@ -10,18 +10,17 @@ declare default function namespace 'report';
 
 (:
 TODO
+* TEST func: rename $items to $ctx
+* move @xpath to 'old' element
+* check empty: xpath, item-id, ... validation?
 * README - examples, options
 * unit tests
-  * <old><foo/></old><new>text</new>?
-  * report schema
-  * cache use
   * expected fails
   * replacing / deleting the root
-  * replacing with sequence of text nodes
 * documentation
 :)
 
-declare variable $report:ERROR  := xs:QName("XQREPORT");
+declare variable $report:ERROR  := xs:QName("err:XQREPORT");
 declare variable $report:SCHEMA := file:base-dir() || '../../etc/report.xsd';
 
 (: option keys :)
@@ -54,34 +53,40 @@ declare function as-xml(
   let $id-selector-f := $options($report:ITEMID)
   let $no-id-selector := fn:empty($id-selector-f)
   let $items := $options($report:ITEMS)($root-context)
+  let $err := if(fn:count($items) eq 1 and $items is $root-context)
+    then error('The context root cannot be the direct target of a report') else ()
   let $cache := $options($report:CACHE)
   let $test-id := $options($report:TESTID)
   let $test-f := $options($report:TEST)
   
+  (: if id selector is given, copy nodes :)
   let $items := if($no-id-selector) then $items else $items ! (. update ())
   let $reported-items := $test-f($items, $cache) ! element item {
+    (: only make a recommendation if test function returned a NEW key/value pair :)
     let $new-key := map:keys(.) = $report:NEW
     let $item := .($report:ITEM)
     let $old  := .($report:OLD)
     let $new  := .($report:NEW)
     let $info := .($report:INFO)
+    let $item-loc := xpath-location($item)
     return (
       attribute item-id {
         if($no-id-selector) then
-          xpath-location($item)
+          $item-loc
         else
           $id-selector-f($item)
       },
-      attribute xpath   {
+      (: determine path of 'old' node relative to item :)
+      attribute xpath {
         let $old-loc := xpath-location($old)
         return if($no-id-selector) then
-          fn:replace($old-loc, escape-location-path-pattern(xpath-location($item)), '')
+          fn:replace($old-loc, escape-location-path-pattern($item-loc), '')
         else
           $old-loc
       },
-      element old       { $old },
-      element new       { $new }[$new-key],
-      element info      { $info }[fn:exists($info)]
+      element old { $old },
+      element new { $new }[$new-key],
+      element info { $info }[fn:exists($info)]
     )
   }
   
@@ -93,7 +98,6 @@ declare function as-xml(
     attribute test-id { $test-id },
     $reported-items
   }
-  
   return $report
 };
 

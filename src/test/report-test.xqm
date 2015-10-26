@@ -21,7 +21,26 @@ declare %unit:after-module %updating function t:clean()
   db:drop($t:DB)
 };
 
-declare %unit:test function t:report-fix-simple-text()
+declare %unit:test('expected', 'err:XQREPORT') function t:modify-context-root()
+{
+  report:as-xml(
+    <node/>,
+    map {
+      $report:ITEMS: function($ctx as node()) as node()* { $ctx },
+      $report:TEST:
+        function($items as node()*, $cache as map(*)?) as map(*)* {
+          for $item in $items
+          return map {
+            $report:ITEM : $item,
+            $report:OLD  : $item,
+            $report:NEW  : <node1/>
+          }
+        }
+    }
+  )
+};
+
+declare %unit:test function t:fix-simple-text()
 {
   let $doc :=
     <items>
@@ -54,7 +73,7 @@ declare %unit:test function t:report-fix-simple-text()
   )
 };
 
-declare %unit:test function t:report-fix-global-element-ordering()
+declare %unit:test function t:fix-global-element-ordering()
 {
   let $doc :=
     <items>
@@ -89,7 +108,7 @@ declare %unit:test function t:report-fix-global-element-ordering()
   )
 };
 
-declare %unit:test function t:report-fix-nested-without-id()
+declare %unit:test function t:clean-nested-texts-without-id()
 {
   let $doc :=
     <items>
@@ -154,7 +173,7 @@ declare %unit:test function t:apply-to-database-test()
   )
 };
 
-declare %unit:test function t:report-delete-item()
+declare %unit:test function t:delete-item-1()
 {
   let $doc :=
     <items>
@@ -187,7 +206,7 @@ declare %unit:test function t:report-delete-item()
   )
 };
 
-declare %unit:test function t:report-delete-item2()
+declare %unit:test function t:delete-item-2()
 {
   let $doc :=
     <items>
@@ -220,7 +239,7 @@ declare %unit:test function t:report-delete-item2()
   )
 };
 
-declare %unit:test function t:report-delete-replace()
+declare %unit:test function t:replace-entry()
 {
   let $doc :=
     <items>
@@ -233,10 +252,7 @@ declare %unit:test function t:report-delete-replace()
     $report:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
-        let $fail := fn:not(
-          every $t in $item/text() satisfies $t eq fn:normalize-space($t)
-        )
-        where $fail
+        where fn:not(every $t in $item/text() satisfies $t eq fn:normalize-space($t))
         return map {
           $report:ITEM : $item,
           $report:OLD  : $item,
@@ -254,7 +270,7 @@ declare %unit:test function t:report-delete-replace()
   )
 };
 
-declare %unit:test function t:report-no-new-key()
+declare %unit:test function t:test-result-without-new()
 {
   let $doc :=
     <items>
@@ -276,7 +292,7 @@ declare %unit:test function t:report-no-new-key()
   return unit:assert(fn:empty($report/item/new))
 };
 
-declare %unit:test function t:namespaces-no-item-id()
+declare %unit:test function t:context-with-namespaces()
 {
   let $doc :=
     <items>
@@ -310,5 +326,30 @@ declare %unit:test function t:namespaces-no-item-id()
   return (
     unit:assert-equals(fn:count($cleaned//*:BEFORE), 0),
     unit:assert-equals(fn:count($cleaned//*:AFTER), 5)
+  )
+};
+
+declare %unit:test function t:access-cache()
+{
+  let $doc :=
+    <items>
+      <entry myId="id0">text</entry>
+    </items>
+  let $options := map {
+    $report:ITEMS:   function($items as node()) as node()* { $items//entry },
+    $report:TEST:
+      function($item as node()*, $cache as map(*)?) as map(*)* {
+        map {
+          $report:ITEM : $item,
+          $report:OLD  : $item/text(),
+          $report:NEW  : $cache('new-text')
+        }
+      },
+    $report:CACHE: map { 'new-text': 'foo' }
+  }
+  let $report := report:as-xml($doc, $options)
+  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  return (
+    unit:assert-equals($cleaned/entry/text(), text { 'foo' })
   )
 };
