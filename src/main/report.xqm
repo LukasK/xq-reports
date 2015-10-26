@@ -49,7 +49,7 @@ declare function as-xml(
   let $ok := check-options($options, fn:false())
   let $timestamp := fn:current-dateTime()
   
-  (: OPTIONS :)
+  (: options :)
   let $id-selector-f := $options($report:ITEMID)
   let $no-id-selector := fn:empty($id-selector-f)
   let $items := $options($report:ITEMS)($root-context)
@@ -59,8 +59,6 @@ declare function as-xml(
   let $test-id := $options($report:TESTID)
   let $test-f := $options($report:TEST)
   
-  (: if id selector is given, copy nodes :)
-  let $items := if($no-id-selector) then $items else $items ! (. update ())
   let $reported-items := $test-f($items, $cache) ! element item {
     (: only make a recommendation if test function returned a NEW key/value pair :)
     let $new-key := map:keys(.) = $report:NEW
@@ -68,29 +66,24 @@ declare function as-xml(
     let $old  := .($report:OLD)
     let $new  := .($report:NEW)
     let $info := .($report:INFO)
-    let $item-loc := xpath-location($item)
+    let $item-location := xpath-location($item)
     return (
       attribute item-id {
         if($no-id-selector) then
-          $item-loc
+          $item-location
         else
           $id-selector-f($item)
       },
       (: determine path of 'old' node relative to item :)
       attribute xpath {
-        let $old-loc := xpath-location($old)
-        return if($no-id-selector) then
-          fn:replace($old-loc, escape-location-path-pattern($item-loc), '')
-        else
-          $old-loc
+        fn:replace(xpath-location($old), escape-location-path-pattern($item-location), '')
       },
       element old { $old },
       element new { $new }[$new-key],
       element info { $info }[fn:exists($info)]
     )
   }
-  
-  let $report := element report {
+  return element report {
     attribute count { fn:count($reported-items) },
     attribute time { $timestamp },
     attribute id { new-id() },
@@ -98,7 +91,6 @@ declare function as-xml(
     attribute test-id { $test-id },
     $reported-items
   }
-  return $report
 };
 
 (:~
@@ -114,14 +106,12 @@ declare %updating function apply(
   $options as map(*)
 ) {
   let $ok := check-options($options, fn:true()) and validate($report)
-  let $no-id-selector := xs:boolean($report/@no-id-selector) eq fn:true()
+  let $no-id-selector := xs:boolean($report/@no-id-selector)
   let $reported-items := $report/item
+  let $item-id-f := $options($report:ITEMID)
+  (: loop through possible items in root context :)
   for $item in $options($report:ITEMS)($root-context)
-  let $item-id :=
-    if($no-id-selector) then
-      xpath-location($item)
-    else
-      $options($report:ITEMID)($item)
+  let $item-id := if($no-id-selector) then xpath-location($item) else $item-id-f($item)
   let $reported-item := $reported-items[@item-id eq $item-id]
   where $reported-item
   (: there might be several items on the descendant axis of an identical item :)
