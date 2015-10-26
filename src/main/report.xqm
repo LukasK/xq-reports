@@ -58,7 +58,9 @@ declare function as-xml(
   let $cache := $options($report:CACHE)
   let $test-id := $options($report:TESTID)
   let $test-f := $options($report:TEST)
-  
+
+  (: if item-id selector is given, items can be copied for substantial speedup :)
+  let $items := if($no-id-selector) then $items else $items ! (. update ())
   let $reported-items := $test-f($items, $cache) ! element item {
     (: only make a recommendation if test function returned a NEW key/value pair :)
     let $new-key := map:keys(.) = $report:NEW
@@ -69,14 +71,14 @@ declare function as-xml(
     let $item-location := xpath-location($item)
     return (
       attribute item-id {
-        if($no-id-selector) then
-          $item-location
-        else
-          $id-selector-f($item)
+        if($no-id-selector) then $item-location else $id-selector-f($item)
       },
       (: determine path of 'old' node relative to item :)
       attribute xpath {
-        fn:replace(xpath-location($old), escape-location-path-pattern($item-location), '')
+        if($no-id-selector) then 
+          fn:replace(xpath-location($old), escape-location-path-pattern($item-location), '')
+        else
+          xpath-location($old)
       },
       element old { $old },
       element new { $new }[$new-key],
