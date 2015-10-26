@@ -10,9 +10,7 @@ declare default function namespace 'report';
 
 (:
 TODO
-* move @xpath to 'old' element
 * apply(): use map for speedup?
-* check empty in report: xpath, item-id, ... validation?
 * README - examples, options
 * unit tests
   * expected fails
@@ -73,14 +71,16 @@ declare function as-xml(
       attribute item-id {
         if($no-id-selector) then $item-location else $id-selector-f($item)
       },
-      (: determine path of 'old' node relative to item :)
-      attribute xpath {
-        if($no-id-selector) then 
-          fn:replace(xpath-location($old), escape-location-path-pattern($item-location), '')
-        else
-          xpath-location($old)
+      element old {
+        (: determine path of 'old' node relative to item :)
+        attribute xpath {
+          if($no-id-selector) then 
+            fn:replace(xpath-location($old), escape-location-path-pattern($item-location), '')
+          else
+            xpath-location($old)
+        },
+        $old
       },
-      element old { $old },
       element new { $new }[$new-key],
       element info { $info }[fn:exists($info)]
     )
@@ -148,14 +148,16 @@ declare %private %updating function apply-recommendation(
   $item as node()
 ) {
   let $new := $reported-item/new
-  where $new
-  let $new  := $new/child::node()
+  where fn:exists($new)
+  let $new := $new/child::node()
   let $old := $reported-item/old/child::node()
-  let $target := xquery:eval("." || $reported-item/@xpath, map { '': $item })
+  let $target := xquery:eval("." || $reported-item/old/@xpath, map { '': $item })
   return
     (: safety measure - throw error in case original already changed :)
     if(fn:not(fn:deep-equal($old, $target))) then
       db:output(error("Report recommendation is outdated: " || $reported-item))
+    else if(fn:count($old) ne 1) then
+      db:output(error("Old element must have one child node: " || $reported-item))
     else
       (: if $new empty -> delete, else -> replace with $new sequence :)
       replace node $target with $new

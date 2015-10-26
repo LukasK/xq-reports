@@ -6,12 +6,18 @@
 				<xs:element name="item" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="old" minOccurs="1"/>
+              <xs:element name="old" minOccurs="1">
+                <xs:complexType mixed="true">
+                  <xs:sequence minOccurs="1">
+                    <xs:any processContents="lax" minOccurs="0"/>
+                  </xs:sequence>
+                  <xs:attribute name="xpath" type="xs:string" use="required"/>
+                </xs:complexType>
+              </xs:element>
               <xs:element name="new" minOccurs="0"/>
               <xs:element name="info" minOccurs="0"/>
             </xs:sequence>
             <xs:attribute name="item-id" type="xs:string" use="required"/>
-            <xs:attribute name="xpath" type="xs:string" use="required"/>
           </xs:complexType>
         </xs:element>
 			</xs:sequence>
