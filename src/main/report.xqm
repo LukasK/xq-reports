@@ -12,10 +12,13 @@ declare default function namespace 'report';
 TODO
 * apply(): use map for speedup?
 * README - examples, options
+* modify attributes in report? - f.i. cannot alter an attribute of the root at the moment w/o
+  including the complete root node in the report
 * unit tests
   * expected fails
   * replacing / deleting the root
 * documentation
+* xq-report namespace?
 :)
 
 declare variable $report:ERROR  := xs:QName("err:XQREPORT");
