@@ -5,36 +5,33 @@
  : @version 0.1
  : @license BSD 2-Clause License
  :)
-module namespace report = 'report';
-declare default function namespace 'report';
+module namespace xq-reports = 'xq-reports';
+declare default function namespace 'xq-reports';
 
 (:
 TODO
 * apply(): use map for speedup?
 * README - examples, options
-* modify attributes in report? - f.i. cannot alter an attribute of the root at the moment w/o
-  including the complete root node in the report
 * unit tests
   * expected fails
   * replacing / deleting the root
 * documentation
-* xq-report namespace?
 :)
 
-declare variable $report:ERROR  := xs:QName("err:XQREPORT");
-declare variable $report:SCHEMA := file:base-dir() || '../../etc/report.xsd';
+declare variable $xq-reports:ERROR  := xs:QName("err:XQREPORT");
+declare variable $xq-reports:SCHEMA := file:base-dir() || '../../etc/report.xsd';
 
 (: option keys :)
-declare variable $report:ITEMS      := 'items-selector';
-declare variable $report:ITEMID     := 'id-selector';
-declare variable $report:TEST       := 'test';
-declare variable $report:TESTID     := 'test-id';
-declare variable $report:CACHE      := 'cache';
+declare variable $xq-reports:ITEMS  := 'items-selector';
+declare variable $xq-reports:ITEMID := 'id-selector';
+declare variable $xq-reports:TEST   := 'test';
+declare variable $xq-reports:TESTID := 'test-id';
+declare variable $xq-reports:CACHE  := 'cache';
 (: test result keys :)
-declare variable $report:ITEM       := 'item';
-declare variable $report:OLD        := 'old';
-declare variable $report:NEW        := 'new';
-declare variable $report:INFO       := 'info';
+declare variable $xq-reports:ITEM   := 'item';
+declare variable $xq-reports:OLD    := 'old';
+declare variable $xq-reports:NEW    := 'new';
+declare variable $xq-reports:INFO   := 'info';
 
 (:~
  : Creates an XML report.
@@ -51,24 +48,24 @@ declare function as-xml(
   let $timestamp := fn:current-dateTime()
   
   (: options :)
-  let $id-selector-f := $options($report:ITEMID)
+  let $id-selector-f := $options($xq-reports:ITEMID)
   let $no-id-selector := fn:empty($id-selector-f)
-  let $items := $options($report:ITEMS)($root-context)
+  let $items := $options($xq-reports:ITEMS)($root-context)
   let $err := if(fn:count($items) eq 1 and $items is $root-context)
     then error('The context root cannot be the direct target of a report') else ()
-  let $cache := $options($report:CACHE)
-  let $test-id := $options($report:TESTID)
-  let $test-f := $options($report:TEST)
+  let $cache := $options($xq-reports:CACHE)
+  let $test-id := $options($xq-reports:TESTID)
+  let $test-f := $options($xq-reports:TEST)
 
   (: if item-id selector is given, items can be copied for substantial speedup :)
   let $items := if($no-id-selector) then $items else $items ! (. update ())
   let $reported-items := $test-f($items, $cache) ! element item {
     (: only make a recommendation if test function returned a NEW key/value pair :)
-    let $new-key := map:keys(.) = $report:NEW
-    let $item := .($report:ITEM)
-    let $old  := .($report:OLD)
-    let $new  := .($report:NEW)
-    let $info := .($report:INFO)
+    let $new-key := map:keys(.) = $xq-reports:NEW
+    let $item := .($xq-reports:ITEM)
+    let $old  := .($xq-reports:OLD)
+    let $new  := .($xq-reports:NEW)
+    let $info := .($xq-reports:INFO)
     let $item-location := xpath-location($item)
     return (
       attribute item-id {
@@ -113,9 +110,9 @@ declare %updating function apply(
   let $ok := check-options($options, fn:true()) and validate($report)
   let $no-id-selector := xs:boolean($report/@no-id-selector)
   let $reported-items := $report/item
-  let $item-id-f := $options($report:ITEMID)
+  let $item-id-f := $options($xq-reports:ITEMID)
   (: loop through possible items in root context :)
-  for $item in $options($report:ITEMS)($root-context)
+  for $item in $options($xq-reports:ITEMS)($root-context)
   let $item-id := if($no-id-selector) then xpath-location($item) else $item-id-f($item)
   let $reported-item := $reported-items[@item-id eq $item-id]
   where $reported-item
@@ -175,7 +172,7 @@ declare %private %updating function apply-recommendation(
 declare function validate(
   $report as element(report)
 ) as xs:boolean {
-  let $v := fn:string-join(validate:xsd-info($report, fn:doc($report:SCHEMA)), "&#xA;")
+  let $v := fn:string-join(validate:xsd-info($report, fn:doc($xq-reports:SCHEMA)), "&#xA;")
   return if($v) then error($v) else fn:true()
 };
 
@@ -195,12 +192,12 @@ declare function check-options(
     error('Type of option invalid: ' || $k)
   }
   return
-         if(fn:not($o($report:ITEMS)   instance of function(node()) as node()*)) then  $e('ITEM')
-    else if(fn:not($o($report:ITEMID)  instance of (function(node()) as xs:string)?))
+         if(fn:not($o($xq-reports:ITEMS)   instance of function(node()) as node()*)) then $e('ITEM')
+    else if(fn:not($o($xq-reports:ITEMID)  instance of (function(node()) as xs:string)?))
       then $e('ITEMID')
-    else if(fn:not($o($report:TESTID)  instance of xs:string?)) then $e('TESTID')
-    else if(fn:not($o($report:CACHE)   instance of map(*)?)) then $e('CACHE')
-    else if(fn:not($o($report:TEST)    instance of function(node()*, map(*)?) as map(*)*)
+    else if(fn:not($o($xq-reports:TESTID)  instance of xs:string?)) then $e('TESTID')
+    else if(fn:not($o($xq-reports:CACHE)   instance of map(*)?)) then $e('CACHE')
+    else if(fn:not($o($xq-reports:TEST)    instance of function(node()*, map(*)?) as map(*)*)
       and fn:not($apply-report)) then $e('TEST')
     else fn:true()
 };
@@ -213,7 +210,7 @@ declare function check-options(
 declare function error(
   $msg as xs:string
 ) {
-  fn:error($report:ERROR, $msg)
+  fn:error($xq-reports:ERROR, $msg)
 };
 
 (:~

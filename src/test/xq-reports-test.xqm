@@ -2,13 +2,12 @@
  : Report module tests.
  :
  : @author Lukas Kircher, BaseX GmbH, 2015
- : @version 0.1
  : @license BSD 2-Clause License
  :)
 module namespace t = 't';
-import module namespace report = 'report';
+import module namespace xq-reports = 'xq-reports' at '../main/xq-reports.xqm';
 
-declare variable $t:DB := $report:TEST;
+declare variable $t:DB := $xq-reports:TEST;
 declare variable $t:INPUT := file:base-dir() || '../../etc/data/test.xml';
 
 declare %unit:before %updating function t:prep()
@@ -23,17 +22,17 @@ declare %unit:after-module %updating function t:clean()
 
 declare %unit:test('expected', 'err:XQREPORT') function t:modify-context-root()
 {
-  report:as-xml(
+  xq-reports:as-xml(
     <node/>,
     map {
-      $report:ITEMS: function($ctx as node()) as node()* { $ctx },
-      $report:TEST:
+      $xq-reports:ITEMS: function($ctx as node()) as node()* { $ctx },
+      $xq-reports:TEST:
         function($items as node()*, $cache as map(*)?) as map(*)* {
           for $item in $items
           return map {
-            $report:ITEM : $item,
-            $report:OLD  : $item,
-            $report:NEW  : <node1/>
+            $xq-reports:ITEM : $item,
+            $xq-reports:OLD  : $item,
+            $xq-reports:NEW  : <node1/>
           }
         }
     }
@@ -48,23 +47,23 @@ declare %unit:test function t:fix-simple-text()
       <entry myId="id2">text2</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
-    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
+    $xq-reports:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $xq-reports:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         for $o in $item/text()
         let $n := fn:normalize-space($o)
         where $n ne $o
         return map {
-          $report:ITEM : $item,
-          $report:OLD  : $o,
-          $report:NEW  : $n
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $o,
+          $xq-reports:NEW  : $n
         }
       }
   }
-  let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned,
     <items>
       <entry myId="id1">text1.1<sth/>text1.2</entry>
@@ -82,23 +81,23 @@ declare %unit:test function t:fix-global-element-ordering()
       <entry myId="id2"><pos>6</pos></entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx/entry },
-    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx/entry },
+    $xq-reports:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $xq-reports:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         let $items := for $i in $items order by number($i/pos/text()) return $i
         for $item at $i in $items
         let $pos := $item/pos
         where number($pos/text()) ne $i
         return map {
-          $report:ITEM : $item,
-          $report:OLD  : $pos,
-          $report:NEW  : $pos update (replace value of node . with $i)
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $pos,
+          $xq-reports:NEW  : $pos update (replace value of node . with $i)
         }
       }
   }
-  let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned,
     <items>
       <entry myId="id1"><pos>3</pos></entry>
@@ -117,21 +116,21 @@ declare %unit:test function t:clean-nested-texts-without-id()
       <n> text5<n> text6<n> text7<n><n/> text8 </n></n><n/> text9 </n></n>
     </items>
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//text() },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//text() },
+    $xq-reports:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         let $new := fn:normalize-space($item)
         where $new ne $item
         return map {
-          $report:ITEM : $item,
-          $report:OLD  : $item,
-          $report:NEW  : $new
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $item,
+          $xq-reports:NEW  : $new
         }
       }
   }
-  let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned,
     <items>
       <n>text1<n>text2<n/>text3</n></n>text4<n>text5<n>text6<n>text7<n><n/>text8</n></n>
@@ -144,23 +143,23 @@ declare %unit:before('apply-to-database') %updating function t:apply-to-database
 {
   let $doc := db:open($t:DB)//apply-to-database-update/items
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
-    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
+    $xq-reports:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $xq-reports:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         for $o in $item/text()
         let $n := fn:normalize-space($o)
         where $n ne $o
         return map {
-          $report:ITEM : $item,
-          $report:OLD  : $o,
-          $report:NEW  : $n
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $o,
+          $xq-reports:NEW  : $n
         }
       }
   }
-  let $report := report:as-xml($doc, $options)
-  return report:apply($report, $doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
+  return xq-reports:apply($report, $doc, $options)
 };
 declare %unit:test function t:apply-to-database-test()
 {
@@ -181,23 +180,23 @@ declare %unit:test function t:delete-item-1()
       <entry myId="id2">text2</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
-    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
+    $xq-reports:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $xq-reports:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         for $o in $item/text()
         let $n := fn:normalize-space($o)
         where $n ne $o
         return map {
-          $report:ITEM : $item,
-          $report:OLD  : $o,
-          $report:NEW  : ()
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $o,
+          $xq-reports:NEW  : ()
         }
       }
   }
-  let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned,
     <items>
       <entry myId="id1"><sth/></entry>
@@ -214,9 +213,9 @@ declare %unit:test function t:delete-item-2()
       <entry myId="id2">text2</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
-    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
+    $xq-reports:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $xq-reports:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         let $fail := fn:not(
@@ -224,14 +223,14 @@ declare %unit:test function t:delete-item-2()
         )
         where $fail
         return map {
-          $report:ITEM : $item,
-          $report:OLD  : $item,
-          $report:NEW  : ()
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $item,
+          $xq-reports:NEW  : ()
         }
       }
   }
-  let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned,
     <items>
       <entry myId="id2">text2</entry>
@@ -247,21 +246,21 @@ declare %unit:test function t:replace-entry()
       <entry myId="id2">text2</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
-    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
+    $xq-reports:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $xq-reports:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         where fn:not(every $t in $item/text() satisfies $t eq fn:normalize-space($t))
         return map {
-          $report:ITEM : $item,
-          $report:OLD  : $item,
-          $report:NEW  : <entry myId="idXX">default</entry>
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $item,
+          $xq-reports:NEW  : <entry myId="idXX">default</entry>
         }
       }
   }
-  let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
   return unit:assert-equals($cleaned,
     <items>
       <entry myId="idXX">default</entry>
@@ -277,18 +276,18 @@ declare %unit:test function t:test-result-without-new()
       <entry myId="id1">text</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
-    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
+    $xq-reports:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $xq-reports:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         return map {
-          $report:ITEM : $item,
-          $report:OLD  : $item
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $item
         }
       }
   }
-  let $report := report:as-xml($doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
   return unit:assert(fn:empty($report/item/new))
 };
 
@@ -308,21 +307,21 @@ declare %unit:test function t:context-with-namespaces()
       <entry myId="id2"><BEFORE/></entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//*:entry },
-    $report:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//*:entry },
+    $xq-reports:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() },
+    $xq-reports:TEST:
       function($items as node()*, $cache as map(*)?) as map(*)* {
         for $item in $items
         for $o in $item//*:BEFORE
         return map {
-          $report:ITEM : $item,
-          $report:OLD  : $o,
-          $report:NEW  : <AFTER/>
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $o,
+          $xq-reports:NEW  : <AFTER/>
         }
       }
   }
-  let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
   return (
     unit:assert-equals(fn:count($cleaned//*:BEFORE), 0),
     unit:assert-equals(fn:count($cleaned//*:AFTER), 5)
@@ -336,19 +335,19 @@ declare %unit:test function t:access-cache()
       <entry myId="id0">text</entry>
     </items>
   let $options := map {
-    $report:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
-    $report:TEST:
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
+    $xq-reports:TEST:
       function($item as node()*, $cache as map(*)?) as map(*)* {
         map {
-          $report:ITEM : $item,
-          $report:OLD  : $item/text(),
-          $report:NEW  : $cache('new-text')
+          $xq-reports:ITEM : $item,
+          $xq-reports:OLD  : $item/text(),
+          $xq-reports:NEW  : $cache('new-text')
         }
       },
-    $report:CACHE: map { 'new-text': 'foo' }
+    $xq-reports:CACHE: map { 'new-text': 'foo' }
   }
-  let $report := report:as-xml($doc, $options)
-  let $cleaned := report:apply-to-copy($report, $doc, $options)
+  let $report := xq-reports:as-xml($doc, $options)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
   return (
     unit:assert-equals($cleaned/entry/text(), text { 'foo' })
   )

@@ -2,6 +2,9 @@
 
 Schema-oblivious and customizable XML data reporting and modification.
 
+## Version
+0.1
+
 ## TODO
 * it is recommended to supply an item-id selector, as report building can be quite slow otherwise, as items cannot be copied
 
