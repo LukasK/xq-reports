@@ -55,15 +55,16 @@ declare function as-xml(
 
   (: if item-id selector is given, items can be copied for substantial speedup :)
   let $items := if($no-id-selector) then $items else $items ! (. update ())
-  let $reported-items := $test-f($items, $cache) ! element item {
+  let $reported-items :=
+    for $hit in $test-f($items, $cache)
     (: only make a recommendation if test function returned a NEW key/value pair :)
-    let $new-key := map:keys(.) = $xq-reports:NEW
-    let $item := .($xq-reports:ITEM)
-    let $old  := .($xq-reports:OLD)
-    let $new  := .($xq-reports:NEW)
-    let $info := .($xq-reports:INFO)
+    let $new-key := map:keys($hit) = $xq-reports:NEW
+    let $item := $hit($xq-reports:ITEM)
+    let $old  := $hit($xq-reports:OLD)
+    let $new  := $hit($xq-reports:NEW)
+    let $info := $hit($xq-reports:INFO)
     let $item-location := xpath-location($item)
-    return (
+    return element item {
       attribute item-id {
         if($no-id-selector) then $item-location else $id-selector-f($item)
       },
@@ -79,8 +80,7 @@ declare function as-xml(
       },
       element new { $new }[$new-key],
       element info { $info }[fn:exists($info)]
-    )
-  }
+    }
   return element report {
     attribute count { fn:count($reported-items) },
     attribute time { $timestamp },
