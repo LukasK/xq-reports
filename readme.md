@@ -1,5 +1,4 @@
-# XQ-Reports
-
+# xq-reports
 Schema-oblivious and customizable XML data reporting and modification.
 
 ## Version
@@ -9,8 +8,7 @@ Schema-oblivious and customizable XML data reporting and modification.
 
 You need at least BaseX 8.2.3 to run xq-reports.
 
-## Introduction
-### What can I do with xq-reports?
+## What can I do with xq-reports?
 
 * Reveal inconsistencies in XML data. Fragments or database nodes are all treated the same.
 * Serialize a detailed XML report including the problem and eventual recommendations for fixes.
@@ -19,7 +17,7 @@ You need at least BaseX 8.2.3 to run xq-reports.
 * Reports are not intended to document simple changes. As a report adds significant overhead, 
   simple diffs might be a better choice.
 
-### Short roundtrip & details
+## Short roundtrip & details
 
 Imagine a fragment (our context) and a report that lists all text nodes on the child axis of each
 'entry' element:
@@ -284,32 +282,82 @@ In the base directory run:
 `basex -v -t src/test`
 
 ## API
-### Functions
-`r:as-xml($root-context as node(), $options as map(*)) as element(report)`
+### as-xml
+```xquery
+r:as-xml(
+  $root-context as node(),
+  $options as map(*)
+) as element(report)
+```
+
 Creates an XML report. A minimal options map contains key/value pairs for: $r:ITEMS, $r:TEST.
 
-`r:apply($report as element(report), $root-context as node(), $options as map(*)) as empty-sequence()`
+### apply
+```xquery
+r:apply(
+  $report as element(report),
+  $root-context as node(),
+  $options as map(*)
+) as empty-sequence()
+```
+
 Applies a report to the given context. The context can be a fragment or a database node. A minimal
 options map contains key/value pairs for: $r:ITEMS
 
-`r:apply-to-copy($report as element(report), $root-context as node(), $options as map(*)) as node()`
+### apply-to-copy
+```xquery
+r:apply-to-copy(
+  $report as element(report),
+  $root-context as node(),
+  $options as map(*)
+) as node()
+```
+
 Applies a report to a copy of the given context and returns the copy. A minimal options map
 contains key/value pairs for: $r:ITEMS
 
 ### Options map
+All reporting functions accept an options map for report customization. All possible key/value pairs
+are listed below. The Keys are declared as variables and are bound to the `xq-reports` module
+namespace. See examples for further reference.
 
-All reporting functions accept an options map that holds several key/value pairs:
+### Option: ITEMS
+```xquery
+function(node()) as node()*
+```
 
-* $r:ITEMS: function(node()) as node()*
-  * Takes the root context and returns items to be tested.
-* $r:ITEMID: (function(node()) as xs:string)?
-  * Takes an item and returns its unique id.
-* $r:TEST: function(node()*, map(*)?) as map(*)*
-  * Takes all identified items within the context and reports them in form of a map with the 
-    following key/value pairs
-    * $r:ITEM: The item to be reported (don't pass copies!)
-    * $r:OLD: The reported node within the item subtree (again, don't pass copies!)
-    * $r:NEW: Recommended substituting node sequence
-    * $r:INFO: Additional information node sequence
-* $r:TESTID: xs:string?: Identifier of test function
-* $r:CACHE: map(*)?: Cache to leverage code reuse/evaluation speedups.
+Takes the root context and returns items to be tested.
+
+### Option: ITEMID
+```xquery
+(function(node()) as xs:string)?
+```
+
+Takes an item and returns its unique id.
+
+### Option: TEST
+```xquery
+function(node()*, map(*)?) as map(*)*
+```
+
+Takes all identified items within the context and reports them in form of a map with the following
+key/value pairs. Keys are again bound to the `xq-reports` module namespace.
+
+* $r:ITEM: The item to be reported (don't pass copies!)
+* $r:OLD: The reported node within the item subtree (again, don't pass copies!)
+* $r:NEW: Recommended substituting node sequence
+* $r:INFO: Additional information node sequence
+
+### Option: TESTID
+```xquery
+xs:string?
+```
+
+Identifier of test function
+
+### Option: CACHE
+```xquery
+map(*)?
+```
+
+Cache to leverage code reuse/evaluation speedups.

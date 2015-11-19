@@ -70,7 +70,7 @@ declare function as-xml(
       element old {
         (: determine path of 'old' node relative to item :)
         attribute xpath {
-          if($no-id-selector) then 
+          if($no-id-selector) then
             fn:replace(xpath-location($old), escape-location-path-pattern($item-location), '')
           else
             xpath-location($old)
