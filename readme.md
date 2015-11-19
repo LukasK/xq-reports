@@ -5,10 +5,6 @@ Schema-oblivious and customizable XML data reporting and modification.
 ## Version
 0.1
 
-## TODO
-* it is recommended to supply an item-id selector, as report building can be quite slow otherwise,
-as items cannot be copied
-
 ## Prerequisites
 
 You need at least BaseX 8.2.3 to run xq-reports.
@@ -101,7 +97,7 @@ Result:
 
 ## Quick Examples
 
-The module namespace 'report' is bound to the prefix 'r' in all examples.
+The module namespace 'xq-reports' is bound to the prefix 'r' in all examples.
 
 ### Normalizing all text nodes in an arbitrary context
 ```xquery
@@ -268,29 +264,52 @@ r:as-xml(
 * **@count**: Number of `item` elements in the report (=reported errors).
 * **@time**: Time of creation.
 * **@id**: Unique report id.
-* **@no-id-selector**: Items to-be-reported are identified via XPath location steps, not ids. As
- a consequence, changing the input context between the creation and application of a report may
- lead to unexpected results.
+* **@no-id-selector**: If true, Items to-be-reported are identified exclusively via XPath location
+  steps, no ids. As a consequence, changing the input context between the creation and application 
+  of a report may lead to unexpected results. It is recommended to supply an item-id selector, as
+  this may significantly speed up the creation of a report.
 * **@test-id**: Id of the performed test.
 
 #### Element: item
 * **@item-id**: Unique Identification of an `item`. Can either be a string value that is unique to
   the `item`, or a unique XPath location step (see report/@no-id-selector).
-* **@xpath**: Location of `new` element relative to the `item` with `@item-id`.
+* **@xpath**: Location of `old` element relative to the `item` with `@item-id`.
 * **old**: Input node at the location `@xpath`, relative to the `item` with `@item-id`.
-* **new**: Replacing node sequence (0-*) for the child node of `old`. The child node of `old` is
-  either deleted or replaced with one or several nodes.
+* **new**: Substituting node sequence (0-*). The child node of `old` is either deleted or replaced
+  with one or several nodes.
 * **info**: Additional info for reference.
 
-## Data Modification
-#### modification
-#### deletion
-#### insertion
-
-## Misc
-#### Unit Tests
+## Unit Tests
 In the base directory run:
 `basex -v -t src/test`
-#### Preserve whitespaces
 
 ## API
+### Functions
+`r:as-xml($root-context as node(), $options as map(*)) as element(report)`
+Creates an XML report. A minimal options map contains key/value pairs for: $r:ITEMS, $r:TEST.
+
+`r:apply($report as element(report), $root-context as node(), $options as map(*)) as empty-sequence()`
+Applies a report to the given context. The context can be a fragment or a database node. A minimal
+options map contains key/value pairs for: $r:ITEMS
+
+`r:apply-to-copy($report as element(report), $root-context as node(), $options as map(*)) as node()`
+Applies a report to a copy of the given context and returns the copy. A minimal options map
+contains key/value pairs for: $r:ITEMS
+
+### Options map
+
+All reporting functions accept an options map that holds several key/value pairs:
+
+* $r:ITEMS: function(node()) as node()*
+  * Takes the root context and returns items to be tested.
+* $r:ITEMID: (function(node()) as xs:string)?
+  * Takes an item and returns its unique id.
+* $r:TEST: function(node()*, map(*)?) as map(*)*
+  * Takes all identified items within the context and reports them in form of a map with the 
+    following key/value pairs
+    * $r:ITEM: The item to be reported (don't pass copies!)
+    * $r:OLD: The reported node within the item subtree (again, don't pass copies!)
+    * $r:NEW: Recommended substituting node sequence
+    * $r:INFO: Additional information node sequence
+* $r:TESTID: xs:string?: Identifier of test function
+* $r:CACHE: map(*)?: Cache to leverage code reuse/evaluation speedups.
