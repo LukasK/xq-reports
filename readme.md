@@ -6,7 +6,8 @@ Schema-oblivious and customizable XML data reporting and modification.
 0.1
 
 ## TODO
-* it is recommended to supply an item-id selector, as report building can be quite slow otherwise, as items cannot be copied
+* it is recommended to supply an item-id selector, as report building can be quite slow otherwise,
+as items cannot be copied
 
 ## Prerequisites
 
@@ -19,11 +20,13 @@ You need at least BaseX 8.2.3 to run xq-reports.
 * Serialize a detailed XML report including the problem and eventual recommendations for fixes.
 * Use the report for communication, archiving or modify recommended fixes manually.
 * Apply a report to the original input data - even if this input has been modified in the meantime.
-* Reports are not intended to document simple changes. As a report adds significant overhead, simple diffs might be a better choice.
+* Reports are not intended to document simple changes. As a report adds significant overhead, 
+  simple diffs might be a better choice.
 
 ### Short roundtrip & details
 
-Imagine a fragment (our context) and a report that lists all text nodes on the child axis of each 'entry' element:
+Imagine a fragment (our context) and a report that lists all text nodes on the child axis of each
+'entry' element:
 
 ```xml
 <entries>
@@ -40,12 +43,16 @@ Imagine a fragment (our context) and a report that lists all text nodes on the c
 </report>
 ```
 
-An `item` is the atomic unit of a report. It represents an arbitrary DOM node within our context. `Items` are identified by their unique `@item-id`, in this case '0'.The `old` element carries the original input node within the subtree of the item. The `@xpath` attribute denotes its location relative to the `item`. The `new` element is optional and recommends a modification of the `item`. If we apply the report to the context, the old node is substituted by the new.
+An `item` is the atomic unit of a report. It represents an arbitrary DOM node within our context.
+`Items` are identified by their unique `@item-id`, in this case '0'.The `old` element carries the
+original input node within the subtree of the item. The `@xpath` attribute denotes its location
+relative to the `item`. The optional `new` element recommends a modification of the `item`. If we
+apply the report to the context, the old node is substituted by the new.
 
 To create a report, we need a minimal configuration (options) in addition to the given context:
 
 ```xquery
-import module namespace r = 'report';
+import module namespace r = 'xq-reports';
 r:as-xml(
   $context,
   map {
@@ -73,7 +80,8 @@ The configuration consists of a map holding several function items.
 
 In case an item is reported the resulting map contains the following:
 
-* `ITEM`: The reported item itself. Passing a copy of the item destroys information on its absolute location within the context and leads to unexpected results.
+* `ITEM`: The reported item itself. Passing a copy of the item destroys information on its absolute
+          location within the context and leads to unexpected results.
 * `OLD`: The reported node within the subtree of the item. Again, do not pass a copy of this node.
 * `NEW`: A substituting sequence of nodes.
 
@@ -133,17 +141,14 @@ Result:
 </report>
 ```
 
-*Note:* The `@item-id` of an item equals its location within the context, if no `ITEM-ID` option is passed.
-
-### Reporting descendant text nodes of specific elements
-
-### Modifying a document
-
-### Modifying a database
+*Note:* The `@item-id` of an item equals its location within the context, if no `ITEM-ID` option
+is passed.
 
 ### Modifying items depending on other items (f.i. ordering)
 
-All items identified by the `ITEMS` function within the context are passed to the `TEST` function. This enables us to report items with respect to other items. The following example normalizes the `pos` element:
+All items identified by the `ITEMS` function within the context are passed to the `TEST` function.
+This enables us to report items with respect to other items. The following example normalizes the
+`pos` element:
 
 ```xquery
 r:as-xml(
@@ -202,21 +207,79 @@ r:as-xml(
 
 ### Using caches
 
+An optional cache can be passed to the options map. The Benefits are for example simple reuse of
+existing code and increased performance.
 
+```xquery
+r:as-xml(
+  <database>
+    <person id="0" name="Christoph"/>
+    <person id="1" name="Maria"/>
+  </database>,
+  map {
+    $r:ITEMS  : function($context as node()) as node()* { $context//person },
+    $r:ITEMID : function($item as node()) as xs:string { $item/@id/fn:string() },
+    $r:TEST   :
+      function($items as node()*, $cache as map(*)?) as map(*)* {
+        let $professions := $cache?professions
+        for $item in $items
+        let $item-new := $item update (
+          insert node attribute profession { $professions($item/@id) } into .
+        )
+        return map {
+          $r:ITEM : $item,
+          $r:OLD  : $item,
+          $r:NEW  : $item-new
+        }
+      },
+    $r:CACHE  : map {
+      "professions" : map {
+        "0": "physiotherapist",
+        "1": "chemist"
+      }
+    }
+  }
+)
+```
+
+```xml
+<report count="2" time="2015-11-19T09:46:05.348+01:00" id="GzEpK6oLS7uC5G5pmduLEw" no-id-selector="false" test-id="">
+  <item item-id="0">
+    <old xpath="">
+      <person id="0" name="Christoph"/>
+    </old>
+    <new>
+      <person profession="physiotherapist" id="0" name="Christoph"/>
+    </new>
+  </item>
+  <item item-id="1">
+    <old xpath="">
+      <person id="1" name="Maria"/>
+    </old>
+    <new>
+      <person profession="chemist" id="1" name="Maria"/>
+    </new>
+  </item>
+</report>
+```
 
 ## Reports in Detail
 #### Element: report
 * **@count**: Number of `item` elements in the report (=reported errors).
 * **@time**: Time of creation.
 * **@id**: Unique report id.
-* **@no-id-selector**: Items to-be-reported are identified via XPath location steps, not ids. As a consequence, changing the input context between the creation and application of a report may lead to unexpected results.
+* **@no-id-selector**: Items to-be-reported are identified via XPath location steps, not ids. As
+ a consequence, changing the input context between the creation and application of a report may
+ lead to unexpected results.
 * **@test-id**: Id of the performed test.
 
 #### Element: item
-* **@item-id**: Unique Identification of an `item`. Can either be a string value that is unique to the `item`, or a unique XPath location step (see report/@no-id-selector).
+* **@item-id**: Unique Identification of an `item`. Can either be a string value that is unique to
+  the `item`, or a unique XPath location step (see report/@no-id-selector).
 * **@xpath**: Location of `new` element relative to the `item` with `@item-id`.
 * **old**: Input node at the location `@xpath`, relative to the `item` with `@item-id`.
-* **new**: Replacing node sequence (0-*) for the child node of `old`. The child node of `old` is either deleted or replaced with one or several nodes.
+* **new**: Replacing node sequence (0-*) for the child node of `old`. The child node of `old` is
+  either deleted or replaced with one or several nodes.
 * **info**: Additional info for reference.
 
 ## Data Modification

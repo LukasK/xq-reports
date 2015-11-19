@@ -10,12 +10,8 @@ declare default function namespace 'xq-reports';
 
 (:
 TODO
-* apply(): use map for speedup?
-* README - examples, options
 * unit tests
   * expected fails
-  * replacing / deleting the root
-* documentation
 :)
 
 declare variable $xq-reports:ERROR  := xs:QName("err:XQREPORT");
