@@ -340,10 +340,10 @@ function(node()*, map(*)?) as map(*)*
 Takes all identified items within the context and reports them in form of a map with the following
 key/value pairs. Keys are again bound to the `xq-reports` module namespace.
 
-* $r:ITEM: The item to be reported (don't pass copies!)
-* $r:OLD: The reported node within the item subtree (again, don't pass copies!)
-* $r:NEW: Recommended substituting node sequence
-* $r:INFO: Additional information node sequence
+* `$r:ITEM as node()`: The item to be reported (don't pass copies!)
+* `$r:OLD as node()`: The reported node within the item subtree (again, don't pass copies!)
+* `$r:NEW as node()*`: Recommended substituting node sequence
+* `$r:INFO as node()*`: Additional information node sequence
 
 ### Option: TESTID
 ```xquery
