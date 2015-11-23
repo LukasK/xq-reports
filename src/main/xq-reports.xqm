@@ -8,16 +8,13 @@
 module namespace xq-reports = 'xq-reports';
 declare default function namespace 'xq-reports';
 
-(:
-TODO
-* unit tests
-  * expected fails
-:)
-
+(: errors :)
 declare variable $xq-reports:ERROR := xs:QName("xq-reports:XQREP01");
 declare variable $xq-reports:OPTIONS-ERROR := xs:QName("xq-reports:XQREP02");
 declare variable $xq-reports:TEST-RETURN-ERROR := xs:QName("xq-reports:XQREP03");
 declare variable $xq-reports:SCHEMA-ERROR := xs:QName("xq-reports:XQREP04");
+
+(: report schema file :)
 declare variable $xq-reports:SCHEMA := file:base-dir() || '../../etc/report.xsd';
 
 (: option keys :)
@@ -26,6 +23,7 @@ declare variable $xq-reports:ITEMID := 'id-selector';
 declare variable $xq-reports:TEST   := 'test';
 declare variable $xq-reports:TESTID := 'test-id';
 declare variable $xq-reports:CACHE  := 'cache';
+
 (: test result keys :)
 declare variable $xq-reports:ITEM   := 'item';
 declare variable $xq-reports:OLD    := 'old';

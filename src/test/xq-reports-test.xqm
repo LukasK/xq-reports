@@ -63,7 +63,11 @@ declare %unit:test function t:fix-simple-text()
       }
   }
   let $report := xq-reports:as-xml($doc, $options)
-  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
+  (: pass only minimal options to test if this works :)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, map {
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//entry },
+    $xq-reports:ITEMID:  function($item as node()) as xs:string { $item/@myId/fn:string() }
+  })
   return unit:assert-equals($cleaned,
     <items>
       <entry myId="id1">text1.1<sth/>text1.2</entry>
@@ -130,7 +134,10 @@ declare %unit:test function t:clean-nested-texts-without-id()
       }
   }
   let $report := xq-reports:as-xml($doc, $options)
-  let $cleaned := xq-reports:apply-to-copy($report, $doc, $options)
+  (: pass minimal options map instead of complete one :)
+  let $cleaned := xq-reports:apply-to-copy($report, $doc, map {
+    $xq-reports:ITEMS:   function($ctx as node()) as node()* { $ctx//text() }
+  })
   return unit:assert-equals($cleaned,
     <items>
       <n>text1<n>text2<n/>text3</n></n>text4<n>text5<n>text6<n>text7<n><n/>text8</n></n>
