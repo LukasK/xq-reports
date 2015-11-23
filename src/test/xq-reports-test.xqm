@@ -20,7 +20,7 @@ declare %unit:after-module %updating function t:clean()
   db:drop($t:DB)
 };
 
-declare %unit:test('expected', 'err:XQREPORT') function t:modify-context-root()
+declare %unit:test('expected', 'xq-reports:XQREP01') function t:modify-context-root()
 {
   xq-reports:as-xml(
     <node/>,
@@ -58,7 +58,7 @@ declare %unit:test function t:fix-simple-text()
         return map {
           $xq-reports:ITEM : $item,
           $xq-reports:OLD  : $o,
-          $xq-reports:NEW  : $n
+          $xq-reports:NEW  : text {$n}
         }
       }
   }
@@ -125,7 +125,7 @@ declare %unit:test function t:clean-nested-texts-without-id()
         return map {
           $xq-reports:ITEM : $item,
           $xq-reports:OLD  : $item,
-          $xq-reports:NEW  : $new
+          $xq-reports:NEW  : text {$new}
         }
       }
   }
@@ -154,7 +154,7 @@ declare %unit:before('apply-to-database') %updating function t:apply-to-database
         return map {
           $xq-reports:ITEM : $item,
           $xq-reports:OLD  : $o,
-          $xq-reports:NEW  : $n
+          $xq-reports:NEW  : text {$n}
         }
       }
   }
@@ -341,7 +341,7 @@ declare %unit:test function t:access-cache()
         map {
           $xq-reports:ITEM : $item,
           $xq-reports:OLD  : $item/text(),
-          $xq-reports:NEW  : $cache('new-text')
+          $xq-reports:NEW  : text {$cache('new-text')}
         }
       },
     $xq-reports:CACHE: map { 'new-text': 'foo' }
@@ -351,4 +351,131 @@ declare %unit:test function t:access-cache()
   return (
     unit:assert-equals($cleaned/entry/text(), text { 'foo' })
   )
+};
+
+
+(: ----------------------- options map / test result types tests -------------------------------- :)
+
+declare %private function t:check-options-setup($options) {
+  xq-reports:as-xml(
+    <database>
+      <node/>
+    </database>,
+    $options
+  )
+};
+
+declare %unit:test('expected', 'xq-reports:XQREP02') function t:invalid-options()
+{
+  t:check-options-setup(
+    map {
+      (: invalid ITEMS :)
+      $xq-reports:ITEMS: function() { <node/> },
+      $xq-reports:TEST: function($items as node()*, $cache as map(*)?) as map(*)* { () }
+    }
+  )
+};
+
+declare %unit:test('expected', 'xq-reports:XQREP02') function t:invalid-options-2()
+{
+  t:check-options-setup(
+    (: TEST missing :)
+    map {
+      $xq-reports:ITEMS: function($ctx as node()) as node()* { $ctx//node }
+    }
+  )
+};
+
+declare %unit:test('expected', 'xq-reports:XQREP02') function t:invalid-options-3()
+{
+  t:check-options-setup(
+    (: ITEMS missing :)
+    map {
+      $xq-reports:TEST: function($items as node()*, $cache as map(*)?) as map(*)* { () }
+    }
+  )
+};
+
+declare %unit:test('expected', 'xq-reports:XQREP02') function t:invalid-options-4()
+{
+  t:check-options-setup(
+    (: ITEMID invalid :)
+    map {
+      $xq-reports:ITEMS: function($ctx as node()) as node()* { $ctx//node },
+      $xq-reports:ITEMID: function() { 'item-id' },
+      $xq-reports:TEST: function($items as node()*, $cache as map(*)?) as map(*)* { () }
+    }
+  )
+};
+
+declare %unit:test('expected', 'xq-reports:XQREP03') function t:invalid-test-result()
+{
+  xq-reports:as-xml(
+    <database>
+      <node/>
+    </database>,
+    map {
+      $xq-reports:ITEMS: function($ctx as node()) as node()* { $ctx//node },
+      $xq-reports:TEST:
+        function($items as node()*, $cache as map(*)?) as map(*)* {
+          for $item in $items
+          return map {
+            (: test invalid ITEM :)
+            $xq-reports:ITEM : 'should be a node, not a string',
+            $xq-reports:OLD  : $item,
+            $xq-reports:NEW  : <newItem/>
+          }
+        }
+    }
+  )
+};
+
+declare %unit:test('expected', 'xq-reports:XQREP03') function t:invalid-test-result-2()
+{
+  xq-reports:as-xml(
+    <database>
+      <node/>
+    </database>,
+    map {
+      $xq-reports:ITEMS: function($ctx as node()) as node()* { $ctx//node },
+      $xq-reports:TEST:
+        function($items as node()*, $cache as map(*)?) as map(*)* {
+          for $item in $items
+          return map {
+            $xq-reports:ITEM : $item,
+            (: test invalid OLD :)
+            $xq-reports:OLD  : 'should be a node, not a string',
+            $xq-reports:NEW  : <newItem/>
+          }
+        }
+    }
+  )
+};
+
+declare %unit:test('expected', 'xq-reports:XQREP03') function t:invalid-test-result-3()
+{
+  xq-reports:as-xml(
+    <database>
+      <node/>
+    </database>,
+    map {
+      $xq-reports:ITEMS: function($ctx as node()) as node()* { $ctx//node },
+      $xq-reports:TEST:
+        function($items as node()*, $cache as map(*)?) as map(*)* {
+          for $item in $items
+          return map {
+            $xq-reports:ITEM : $item,
+            $xq-reports:OLD  : $item,
+            (: test invalid NEW :)
+            $xq-reports:NEW  : 'should be a node, not a string'
+          }
+        }
+    }
+  )
+};
+
+declare %unit:test('expected', 'xq-reports:XQREP04') function t:invalid-invalid-report()
+{
+  (: @xpath attribute missing :)
+  xq-reports:validate(db:open($t:DB)//invalid-report/report)
 };

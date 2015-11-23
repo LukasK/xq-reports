@@ -14,7 +14,10 @@ TODO
   * expected fails
 :)
 
-declare variable $xq-reports:ERROR  := xs:QName("err:XQREPORT");
+declare variable $xq-reports:ERROR := xs:QName("xq-reports:XQREP01");
+declare variable $xq-reports:OPTIONS-ERROR := xs:QName("xq-reports:XQREP02");
+declare variable $xq-reports:TEST-RETURN-ERROR := xs:QName("xq-reports:XQREP03");
+declare variable $xq-reports:SCHEMA-ERROR := xs:QName("xq-reports:XQREP04");
 declare variable $xq-reports:SCHEMA := file:base-dir() || '../../etc/report.xsd';
 
 (: option keys :)
@@ -40,15 +43,14 @@ declare function as-xml(
   $root-context as node(),
   $options as map(*)
 ) as element(report) {
-  let $ok := check-options($options, fn:false())
+  check-options($options, fn:false()),
   let $timestamp := fn:current-dateTime()
-  
   (: options :)
   let $id-selector-f := $options($xq-reports:ITEMID)
   let $no-id-selector := fn:empty($id-selector-f)
   let $items := $options($xq-reports:ITEMS)($root-context)
-  let $err := if(fn:count($items) eq 1 and $items is $root-context)
-    then error('The context root cannot be the direct target of a report') else ()
+  let $err := if(fn:count($items) eq 1 and $items is $root-context) then
+    error($xq-reports:ERROR, 'The context root cannot be the direct target of a report') else ()
   let $cache := $options($xq-reports:CACHE)
   let $test-id := $options($xq-reports:TESTID)
   let $test-f := $options($xq-reports:TEST)
@@ -57,30 +59,34 @@ declare function as-xml(
   let $items := if($no-id-selector) then $items else $items ! (. update ())
   let $reported-items :=
     for $hit in $test-f($items, $cache)
-    (: only make a recommendation if test function returned a NEW key/value pair :)
-    let $new-key := map:keys($hit) = $xq-reports:NEW
-    let $item := $hit($xq-reports:ITEM)
-    let $old  := $hit($xq-reports:OLD)
-    let $new  := $hit($xq-reports:NEW)
-    let $info := $hit($xq-reports:INFO)
-    let $item-location := xpath-location($item)
-    return element item {
-      attribute item-id {
-        if($no-id-selector) then $item-location else $id-selector-f($item)
-      },
-      element old {
-        (: determine path of 'old' node relative to item :)
-        attribute xpath {
-          if($no-id-selector) then
-            fn:replace(xpath-location($old), escape-location-path-pattern($item-location), '')
-          else
-            xpath-location($old)
+    return (
+      check-test-function-return($hit),
+      (: only make a recommendation if test function returned a NEW key/value pair :)
+      let $new-key := map:keys($hit) = $xq-reports:NEW
+      let $item := $hit($xq-reports:ITEM)
+      let $old  := $hit($xq-reports:OLD)
+      let $new  := $hit($xq-reports:NEW)
+      let $info := $hit($xq-reports:INFO)
+      let $item-location := xpath-location($item)
+      return element item {
+        attribute item-id {
+          if($no-id-selector) then $item-location else $id-selector-f($item)
         },
-        $old
-      },
-      element new { $new }[$new-key],
-      element info { $info }[fn:exists($info)]
-    }
+        element old {
+          (: determine path of 'old' node relative to item :)
+          attribute xpath {
+            if($no-id-selector) then
+              fn:replace(xpath-location($old), escape-location-path-pattern($item-location), '')
+            else
+              xpath-location($old)
+          },
+          $old
+        },
+        element new { $new }[$new-key],
+        element info { $info }[fn:exists($info)]
+      }
+    )
+    
   return element report {
     attribute count { fn:count($reported-items) },
     attribute time { $timestamp },
@@ -103,7 +109,8 @@ declare %updating function apply(
   $root-context as node(),
   $options as map(*)
 ) {
-  let $ok := check-options($options, fn:true()) and validate($report)
+  check-options($options, fn:true()),
+  validate($report),
   let $no-id-selector := xs:boolean($report/@no-id-selector)
   let $reported-items := $report/item
   let $item-id-f := $options($xq-reports:ITEMID)
@@ -151,9 +158,9 @@ declare %private %updating function apply-recommendation(
   return
     (: safety measure - throw error in case original already changed :)
     if(fn:not(fn:deep-equal($old, $target))) then
-      db:output(error("Report recommendation is outdated: " || $reported-item))
+      db:output(error($xq-reports:ERROR, "Report recommendation is outdated: " || $reported-item))
     else if(fn:count($old) ne 1) then
-      db:output(error("Old element must have one child node: " || $reported-item))
+      db:output(error($xq-reports:ERROR, "Old element must have one child node: "|| $reported-item))
     else
       (: if $new empty -> delete, else -> replace with $new sequence :)
       replace node $target with $new
@@ -163,13 +170,16 @@ declare %private %updating function apply-recommendation(
  : Valdiates a report element.
  :
  : @param  $report XML report
- : @return True, if report ok.
+ : @return Empty sequence, if report ok.
  :)
 declare function validate(
   $report as element(report)
-) as xs:boolean {
+) as empty-sequence() {
   let $v := fn:string-join(validate:xsd-info($report, fn:doc($xq-reports:SCHEMA)), "&#xA;")
-  return if($v) then error($v) else fn:true()
+  return if($v) then
+    error($xq-reports:SCHEMA-ERROR, $v)
+  else
+    ()
 };
 
 (:~
@@ -178,35 +188,65 @@ declare function validate(
  : @param  $o Options map
  : @param  $apply-report Options map is to be used for report application, i.e. no test function
                          needed then.
- : @return True, if ok.
+ : @return Empty sequence, if ok. Else raise error.
  :)
 declare function check-options(
   $o as map(*),
   $apply-report as xs:boolean
-) as xs:boolean {
+) as empty-sequence() {
   let $e := function($k) {
-    error('Type of option invalid: ' || $k)
+    error($xq-reports:OPTIONS-ERROR, 'Type of option invalid or option missing: ' || $k)
   }
   return
-         if(fn:not($o($xq-reports:ITEMS)   instance of function(node()) as node()*)) then $e('ITEM')
-    else if(fn:not($o($xq-reports:ITEMID)  instance of (function(node()) as xs:string)?))
-      then $e('ITEMID')
-    else if(fn:not($o($xq-reports:TESTID)  instance of xs:string?)) then $e('TESTID')
-    else if(fn:not($o($xq-reports:CACHE)   instance of map(*)?)) then $e('CACHE')
-    else if(fn:not($o($xq-reports:TEST)    instance of function(node()*, map(*)?) as map(*)*)
-      and fn:not($apply-report)) then $e('TEST')
-    else fn:true()
+    if(fn:not($o($xq-reports:ITEMS) instance of function(node()) as node()*)) then
+      $e('ITEMS')
+    else if(fn:not($o($xq-reports:ITEMID) instance of (function(node()) as xs:string)?)) then
+      $e('ITEMID')
+    else if(fn:not($o($xq-reports:TESTID) instance of xs:string?)) then
+      $e('TESTID')
+    else if(fn:not($o($xq-reports:CACHE) instance of map(*)?)) then
+      $e('CACHE')
+    else if(fn:not($o($xq-reports:TEST) instance of function(node()*, map(*)?) as map(*)*)
+    and fn:not($apply-report)) then
+      $e('TEST')
+    else ()
+};
+
+(:~
+ : Raises an error if the returned map of a test function is not correctly typed.
+ :
+ : @param  $o test result map
+ : @return Empty sequence, if ok. Else raise error.
+ :)
+declare function check-test-function-return(
+  $m as map(*)
+) as empty-sequence() {
+  let $e := function($k) {
+    error($xq-reports:TEST-RETURN-ERROR, 'Invalid test result (key=' || $k || '): ' || $m($k))
+  }
+  return
+    if(fn:not($m($xq-reports:ITEM) instance of node())) then
+      $e($xq-reports:ITEM)
+    else if(fn:not($m($xq-reports:OLD) instance of node())) then
+      $e($xq-reports:OLD)
+    else if(fn:not($m($xq-reports:NEW) instance of node()*)) then
+      $e($xq-reports:NEW)
+    else if(fn:not($m($xq-reports:INFO) instance of node()*)) then
+      $e($xq-reports:INFO)
+    else ()
 };
 
 (:~
  : Raises an error with the given message.
  :
+ : @param  $type error type
  : @param  $msg message
  :)
 declare function error(
+  $type as xs:QName,
   $msg as xs:string
 ) {
-  fn:error($xq-reports:ERROR, $msg)
+  fn:error($type, $msg)
 };
 
 (:~

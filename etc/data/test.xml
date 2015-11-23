@@ -5,4 +5,15 @@
       <entry myId="id2">text2</entry>
     </items>
   </apply-to-database-update>
+  <invalid-report>
+    <report id="pZD1Bw1xTcCBluaO40hgwA" no-id-selector="true">
+      <item item-id="/Q{}node[1]">
+        <!-- xpath attribute missing -->
+        <old>
+          <node/>
+        </old>
+        <new>foo</new>
+      </item>
+    </report>
+  </invalid-report>
 </tests>

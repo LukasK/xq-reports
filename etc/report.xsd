@@ -21,11 +21,11 @@
           </xs:complexType>
         </xs:element>
 			</xs:sequence>
-      <xs:attribute name="time" type="xs:dateTime" use="required"/>
+      <xs:attribute name="time" type="xs:dateTime" use="optional"/>
       <xs:attribute name="id" type="xs:string" use="required"/>
       <xs:attribute name="no-id-selector" type="xs:boolean" use="required"/>
-      <xs:attribute name="count" type="xs:integer" use="required"/>
-      <xs:attribute name="test-id" type="xs:string" use="required"/>
+      <xs:attribute name="count" type="xs:integer" use="optional"/>
+      <xs:attribute name="test-id" type="xs:string" use="optional"/>
 		</xs:complexType>
   </xs:element>
 </xs:schema>
