@@ -2,7 +2,7 @@
  : Report module.
  :
  : @author Lukas Kircher, BaseX GmbH, 2015
- : @version 0.1
+ : @version 0.0.1
  : @license BSD 2-Clause License
  :)
 module namespace xq-reports = 'xq-reports';
@@ -263,6 +263,13 @@ declare %private function new-id(
     ! fn:replace(., "[^A-Za-z0-9]", "_")
 };
 
+(:~
+ : Determines the xpath location of the given node, removes the root context at the
+ : beginning and returns the string.
+ :
+ : @param  $node
+ : @return xpath location string w/o root context
+ :)
 declare %private function xpath-location(
   $n as node()
 ) as xs:string {

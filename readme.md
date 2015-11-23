@@ -1,9 +1,6 @@
 # xq-reports
 Schema-oblivious and customizable XML data reporting and modification.
 
-## Version
-0.1
-
 ## Prerequisites
 
 You need at least BaseX 8.2.3 to run xq-reports.
