@@ -9,7 +9,7 @@ Schema-oblivious and customizable XML data reporting and modification.
   * [Modifying items depending on other items (f.i. ordering)](#modifying-items-depending-on-other-items)
   * [Using caches](#using-caches)
 * [Reports in Detail](#reports-in-detail)
-* [Unit Tests](#unit-rests)
+* [Unit Tests](#unit-tests)
 * [API](#api)
 
 ## Prerequisites
