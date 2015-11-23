@@ -1,6 +1,17 @@
 # xq-reports
 Schema-oblivious and customizable XML data reporting and modification.
 
+* [Prerequisites](#prerequisites)
+* [What can I do with xq-reports?](#what-can-i-do-with-xq-reports)
+* [Short roundtrip and details](#short-roundtrip-and-details)
+* [Quick Examples](#quick-examples)
+  * [Normalizing all text nodes in an arbitrary context](#normalizing-all-text-nodes-in-an-arbitrary-context)
+  * [Modifying items depending on other items (f.i. ordering)](#modifying-items-depending-on-other-items)
+  * [Using caches](#using-caches)
+* [Reports in Detail](#reports-in-detail)
+* [Unit Tests](#unit-rests)
+* [API](#api)
+
 ## Prerequisites
 
 You need at least BaseX 8.2.3 to run xq-reports.
@@ -14,7 +25,7 @@ You need at least BaseX 8.2.3 to run xq-reports.
 * Reports are not intended to document simple changes. As a report adds significant overhead, 
   simple diffs might be a better choice.
 
-## Short roundtrip & details
+## Short roundtrip and details
 
 Imagine a fragment (our context) and a report that lists all text nodes on the child axis of each
 'entry' element:
@@ -135,7 +146,7 @@ Result:
 *Note:* The `@item-id` of an item equals its location within the context, if no `ITEM-ID` option
 is passed.
 
-### Modifying items depending on other items (f.i. ordering)
+### Modifying items depending on other items
 
 All items identified by the `ITEMS` function within the context are passed to the `TEST` function.
 This enables us to report items with respect to other items. The following example normalizes the
