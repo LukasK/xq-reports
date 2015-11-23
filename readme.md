@@ -337,8 +337,8 @@ Takes an item and returns its unique id.
 function(node()*, map(*)?) as map(*)*
 ```
 
-Takes all identified items within the context and returns one result map per item with the following
-key/value pairs. Keys are again bound to the `xq-reports` module namespace.
+Takes all identified items within the context and returns one result map per reported item with the
+following key/value pairs. Keys are again bound to the `xq-reports` module namespace.
 
 * `$r:ITEM as node()`: The item to be reported (don't pass copies!)
 * `$r:OLD as node()`: The reported node within the item subtree (again, don't pass copies!)
