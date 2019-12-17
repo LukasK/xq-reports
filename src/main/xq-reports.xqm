@@ -84,7 +84,7 @@ declare function as-xml(
         element info { $info }[fn:exists($info)]
       }
     )
-    
+
   return element report {
     attribute count { fn:count($reported-items) },
     attribute time { $timestamp },
@@ -156,9 +156,9 @@ declare %private %updating function apply-recommendation(
   return
     (: safety measure - throw error in case original already changed :)
     if(fn:not(fn:deep-equal($old, $target))) then
-      db:output(error($xq-reports:ERROR, "Report recommendation is outdated: " || $reported-item))
+      update:output(error($xq-reports:ERROR, "Report recommendation is outdated: " || $reported-item))
     else if(fn:count($old) ne 1) then
-      db:output(error($xq-reports:ERROR, "Old element must have one child node: "|| $reported-item))
+      update:output(error($xq-reports:ERROR, "Old element must have one child node: "|| $reported-item))
     else
       (: if $new empty -> delete, else -> replace with $new sequence :)
       replace node $target with $new

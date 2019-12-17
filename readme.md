@@ -1,4 +1,5 @@
 # xq-reports
+
 Schema-oblivious and customizable XML data reporting and modification.
 
 * [Prerequisites](#prerequisites)
@@ -14,7 +15,7 @@ Schema-oblivious and customizable XML data reporting and modification.
 
 ## Prerequisites
 
-You need at least BaseX 8.2.3 to run xq-reports.
+You need at least BaseX 9.0 to run xq-reports.
 
 ## What can I do with xq-reports?
 
@@ -22,7 +23,7 @@ You need at least BaseX 8.2.3 to run xq-reports.
 * Serialize a detailed XML report including the problem and eventual recommendations for fixes.
 * Use the report for communication, archiving or modify recommended fixes manually.
 * Apply a report to the original input data - even if this input has been modified in the meantime.
-* Reports are not intended to document simple changes. As a report adds significant overhead, 
+* Reports are not intended to document simple changes. As a report adds significant overhead,
   simple diffs might be a better choice.
 
 ## Short roundtrip and details
@@ -271,7 +272,7 @@ r:as-xml(
 * **@time**: Time of creation.
 * **@id**: Unique report id.
 * **@no-id-selector**: If true, Items to-be-reported are identified exclusively via XPath location
-  steps, no ids. As a consequence, changing the input context between the creation and application 
+  steps, no ids. As a consequence, changing the input context between the creation and application
   of a report may lead to unexpected results. It is recommended to supply an item-id selector, as
   this may significantly speed up the creation of a report.
 * **@test-id**: Id of the performed test.
