@@ -29,6 +29,7 @@ declare variable $xq-reports:ITEM   := 'item';
 declare variable $xq-reports:OLD    := 'old';
 declare variable $xq-reports:NEW    := 'new';
 declare variable $xq-reports:INFO   := 'info';
+declare variable $xq-reports:POS    := 'pos';
 
 (:~
  : Creates an XML report.
@@ -65,6 +66,8 @@ declare function as-xml(
       let $old  := $hit($xq-reports:OLD)
       let $new  := $hit($xq-reports:NEW)
       let $info := $hit($xq-reports:INFO)
+      (: items must be returned in specified order :)
+      let $pos := $hit($xq-reports:POS)
       let $item-location := xpath-location($item)
       return element item {
         attribute item-id {
@@ -81,7 +84,8 @@ declare function as-xml(
           $old
         },
         element new { $new }[$new-key],
-        element info { $info }[fn:exists($info)]
+        element info { $info }[fn:exists($info)],
+        element pos { $pos }[fn:exists($pos)]
       }
     )
 
@@ -91,7 +95,12 @@ declare function as-xml(
     attribute id { new-id() },
     attribute no-id-selector { $no-id-selector },
     attribute test-id { $test-id },
-    $reported-items
+    if (fn:exists($reported-items/pos)) then (
+      for $item in $reported-items
+      order by fn:number($item/pos)
+      return $item
+    )
+    else $reported-items
   }
 };
 
@@ -231,6 +240,8 @@ declare function check-test-function-return(
       $e($xq-reports:NEW)
     else if(fn:not($m($xq-reports:INFO) instance of node()*)) then
       $e($xq-reports:INFO)
+    else if(fn:not($m($xq-reports:POS) instance of node()*)) then
+      $e($xq-reports:POS)
     else ()
 };
 

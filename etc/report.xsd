@@ -16,6 +16,7 @@
               </xs:element>
               <xs:element name="new" minOccurs="0"/>
               <xs:element name="info" minOccurs="0"/>
+              <xs:element name="pos" minOccurs="0"/>
             </xs:sequence>
             <xs:attribute name="item-id" type="xs:string" use="required"/>
           </xs:complexType>
